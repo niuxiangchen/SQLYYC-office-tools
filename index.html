@@ -1,81 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SQLYYC内勤工具箱</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-color: #f8fafc;
-        }
-        .tool-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8fafc;
+      }
+      .tool-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header class="bg-blue-600 text-white py-8">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">
-                <i class="fa fa-wrench mr-2"></i>SQLYYC内勤工具箱
-            </h1>
-            <p class="text-blue-100">高效办公工具集合，提升内勤工作效率</p>
-        </div>
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">
+          <i class="fa fa-wrench mr-2"></i>SQLYYC内勤工具箱
+        </h1>
+        <p class="text-blue-100">高效办公工具集合，提升内勤工作效率</p>
+      </div>
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-12">
-        <div class="max-w-4xl mx-auto">
-            <div class="grid md:grid-cols-2 gap-8">
-                <!-- Excel批量超链接工具 -->
-                <div class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500">
-                    <div class="text-green-500 text-4xl mb-4">
-                        <i class="fa fa-link"></i>
-                    </div>
-                    <h2 class="text-xl font-bold mb-2">Excel专用批量超链接工具</h2>
-                    <p class="text-gray-600 mb-4">支持Windows和macOS系统，批量生成Excel超链接公式，自动适配不同系统路径格式</p>
-                    <a href="hyperlink-tool.html" class="inline-flex items-center text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors">
-                        访问工具 <i class="fa fa-arrow-right ml-2"></i>
-                    </a>
-                    <div class="mt-4 text-sm text-gray-500">
-                        <a href="https://github.com/niuxiangchen/Batch-Hyperlink-Tool-for-Excel" target="_blank" class="hover:text-blue-500">
-                            <i class="fa fa-github mr-1"></i> GitHub源码
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 品规数量分类汇总工具 -->
-                <div class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500">
-                    <div class="text-blue-500 text-4xl mb-4">
-                        <i class="fa fa-calculator"></i>
-                    </div>
-                    <h2 class="text-xl font-bold mb-2">品规数量分类汇总工具</h2>
-                    <p class="text-gray-600 mb-4">快速处理"品规+数量"格式数据，支持生成序号列和去除零数量行，直接导出到Excel</p>
-                    <a href="summary-tool.html" class="inline-flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors">
-                        访问工具 <i class="fa fa-arrow-right ml-2"></i>
-                    </a>
-                    <div class="mt-4 text-sm text-gray-500">
-                        <a href="https://github.com/niuxiangchen/Simple-classification-and-summary" target="_blank" class="hover:text-blue-500">
-                            <i class="fa fa-github mr-1"></i> GitHub源码
-                        </a>
-                    </div>
-                </div>
+      <div class="max-w-4xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Excel批量超链接工具 -->
+          <div
+            class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500"
+          >
+            <div class="text-green-500 text-4xl mb-4">
+              <i class="fa fa-link"></i>
             </div>
+            <h2 class="text-xl font-bold mb-2">Excel专用批量超链接工具</h2>
+            <p class="text-gray-600 mb-4">
+              支持Windows和macOS系统，批量生成Excel超链接公式，自动适配不同系统路径格式
+            </p>
+            <a
+              href="hyperlink-tool.html"
+              class="inline-flex items-center text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors"
+            >
+              访问工具 <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+          </div>
+
+          <!-- 品规数量分类汇总工具 -->
+          <div
+            class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500"
+          >
+            <div class="text-blue-500 text-4xl mb-4">
+              <i class="fa fa-calculator"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">品规数量分类汇总工具</h2>
+            <p class="text-gray-600 mb-4">
+              快速处理"品规+数量"格式数据，支持生成序号列和去除零数量行，直接导出到Excel
+            </p>
+            <a
+              href="summary-tool.html"
+              class="inline-flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors"
+            >
+              访问工具 <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+          </div>
         </div>
+      </div>
     </main>
 
     <footer class="bg-gray-800 text-gray-300 py-6">
-        <div class="container mx-auto px-4 text-center text-sm">
-            <p>© 2025 SQLYYC内勤工具箱 | 提升工作效率的好帮手</p>
-        </div>
+      <div class="container mx-auto px-4 text-center text-sm">
+        <p>© 2025 SQLYYC内勤工具箱 | 提升工作效率的好帮手</p>
+      </div>
     </footer>
-</body>
+  </body>
 </html>
