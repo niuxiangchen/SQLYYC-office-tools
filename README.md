@@ -22,7 +22,7 @@
 
 ## 🌐 在线使用
 直接访问GitHub Pages部署地址，无需下载安装：  
-👉 [https://niuxiangchen.github.io/sqlYYC-office-tools](https://niuxiangchen.github.io/sqlYYC-office-tools)
+👉 [https://niuxiangchen.github.io/SQLYYC-office-tools](https://niuxiangchen.github.io/SQLYYC-office-tools)
 
 ## 📱 适配场景
 - 电脑端（Chrome/Edge/Firefox等现代浏览器）
@@ -32,4 +32,4 @@
 ## 🚀 本地部署/使用
 1. 克隆本仓库到本地：
    ```bash
-   git clone https://github.com/niuxiangchen/sqlYYC-office-tools.git
+   git clone https://github.com/niuxiangchen/SQLYYC-office-tools.git
