@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>品规数量分类汇总工具</title>
+    <!-- 引入Tailwind CSS和Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+    />
+
+    <script>
+      // 配置Tailwind自定义主题
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#3b82f6",
+              secondary: "#64748b",
+              success: "#10b981",
+              warning: "#f59e0b",
+              danger: "#ef4444",
+            },
+            fontFamily: {
+              inter: ["Inter", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .content-auto {
+          content-visibility: auto;
+        }
+        .card-shadow {
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .transition-all-300 {
+          transition: all 0.3s ease;
+        }
+      }
+    </style>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", Arial, sans-serif;
+      }
+
+      /* 水印优化 */
+      .watermark {
+        position: absolute;
+        right: -50px;
+        bottom: -50px;
+        font-size: 200px;
+        color: rgba(220, 220, 220, 0.2);
+        transform: rotate(-20deg);
+        pointer-events: none;
+        z-index: 1;
+        font-weight: bold;
+      }
+
+      /* 滚动条美化 */
+      textarea::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      textarea::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+      }
+      textarea::-webkit-scrollbar-track {
+        background-color: rgba(243, 244, 246, 0.5);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="bg-primary text-white py-4 shadow-md">
+      <div class="container mx-auto px-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold flex items-center">
+          <i class="fa fa-calculator mr-2"></i>品规数量分类汇总工具
+        </h1>
+        <a
+          href="index.html"
+          class="text-white/90 hover:text-white transition-all-300 flex items-center text-sm"
+        >
+          <i class="fa fa-home mr-1"></i> 返回工具箱首页
+        </a>
+      </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl relative">
+      <!-- 主卡片容器 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 card-shadow relative mb-8">
+        <!-- 输入区域 -->
+        <div class="section mb-8 relative">
+          <div class="watermark">sqyc_nxc</div>
+
+          <label
+            for="inputText"
+            class="block text-gray-800 font-semibold mb-3 text-lg"
+          >
+            输入原始数据
+            <span class="text-sm font-normal text-gray-500 ml-2"
+              >（直接粘贴“品规+数量”行）</span
+            >
+          </label>
+
+          <textarea
+            id="inputText"
+            placeholder="示例格式（无需表头，直接粘贴数据）：
+白沙（软和天下）	0.8
+白沙(硬天天向上细支)	0.3
+白沙(硬天天向上细支)	1.8
+芙蓉王（硬）	11.8
+芙蓉王（硬）	20.8
+...
+（中文括号会自动转为英文括号）"
+            class="w-full h-64 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 bg-white"
+          ></textarea>
+
+          <div class="mt-2 text-sm text-gray-500 bg-blue-50 p-3 rounded-md">
+            <i class="fa fa-lightbulb-o text-primary mr-1"></i>
+            提示：1. 每行格式为「品规 数量」（制表符分隔）；2.
+            无需输入表头，直接粘贴纯数据行；3. 中文括号“（）”自动转英文“()”
+          </div>
+        </div>
+
+        <!-- 功能选项组 -->
+        <div class="option-group flex flex-wrap gap-6 mb-6">
+          <div class="option-item flex items-center">
+            <input
+              type="checkbox"
+              id="addIndex"
+              class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+            />
+            <label for="addIndex" class="ml-2 text-gray-700 cursor-pointer"
+              >导出时自动生成序号列</label
+            >
+          </div>
+          <div class="option-item flex items-center">
+            <input
+              type="checkbox"
+              id="removeZero"
+              class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+            />
+            <label for="removeZero" class="ml-2 text-gray-700 cursor-pointer"
+              >去除汇总后数量为0的行</label
+            >
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="btn-group flex flex-wrap gap-4 mb-8">
+          <button
+            id="summaryBtn"
+            class="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow transition-all-300 flex items-center"
+          >
+            <i class="fa fa-calculator mr-2"></i>生成分类汇总
+          </button>
+          <button
+            id="copyBtn"
+            class="px-6 py-3 bg-success hover:bg-success/90 text-white font-medium rounded-lg shadow transition-all-300 flex items-center"
+          >
+            <i class="fa fa-copy mr-2"></i>复制汇总结果
+          </button>
+          <button
+            id="copyTwoColBtn"
+            class="px-6 py-3 bg-warning hover:bg-warning/90 text-gray-800 font-medium rounded-lg shadow transition-all-300 flex items-center"
+          >
+            <i class="fa fa-columns mr-2"></i>复制分两列结果
+          </button>
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="section relative">
+          <label
+            for="resultText"
+            class="block text-gray-800 font-semibold mb-3 text-lg"
+          >
+            分类汇总结果
+            <span class="text-sm font-normal text-gray-500 ml-2"
+              >（可直接复制到Excel）</span
+            >
+          </label>
+
+          <textarea
+            id="resultText"
+            readonly
+            class="w-full h-48 p-4 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+          ></textarea>
+
+          <div id="message" class="mt-2 text-sm p-3 rounded-md"></div>
+        </div>
+      </div>
+
+      <!-- 友情链接
+    <div class="bg-white rounded-xl p-6 card-shadow">
+      <h3 class="text-gray-800 font-medium mb-4 flex items-center">
+        <i class="fa fa-link text-primary mr-2"></i>友情链接
+      </h3>
+      <div class="flex flex-wrap gap-4">
+        <a href="hyperlink-tool.html" class="flex items-center text-primary hover:text-primary/80 transition-all-300">
+          <i class="fa fa-link mr-2"></i>Excel批量超链接工具
+        </a>
+        <a href="https://github.com/niuxiangchen/Batch-Hyperlink-Tool-for-Excel" target="_blank" class="flex items-center text-gray-600 hover:text-gray-800 transition-all-300">
+          <i class="fa fa-github mr-2"></i>超链接工具源码
+        </a>
+        <a href="https://github.com/niuxiangchen/Simple-classification-and-summary" target="_blank" class="flex items-center text-gray-600 hover:text-gray-800 transition-all-300">
+          <i class="fa fa-github mr-2"></i>分类汇总工具源码
+        </a>
+        <a href="index.html" class="flex items-center text-green-600 hover:text-green-800 transition-all-300">
+          <i class="fa fa-home mr-2"></i>返回工具箱首页
+        </a>
+      </div>
+    </div> -->
+
+      <!-- 联系方式备注 -->
+      <div class="mt-6 text-right text-sm text-gray-500">
+        <p>短号：65048<br />邮箱：1415055998@qq.com</p>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-gray-300 py-6 mt-12">
+      <div class="container mx-auto px-4 text-center text-sm">
+        <p>© 2025 SQLYYC内勤工具箱 | 提升工作效率的好帮手</p>
+      </div>
+    </footer>
+
+    <script>
+      // 中文括号转英文括号
+      function convertBrackets(str) {
+        return str.replace(/（/g, "(").replace(/）/g, ")");
+      }
+
+      // 生成汇总结果（支持序号列 + 去零行）
+      document
+        .getElementById("summaryBtn")
+        .addEventListener("click", function () {
+          const inputText = document.getElementById("inputText").value.trim();
+          const resultText = document.getElementById("resultText");
+          const message = document.getElementById("message");
+          const addIndex = document.getElementById("addIndex").checked;
+          const removeZero = document.getElementById("removeZero").checked;
+          const summaryData = {};
+          let validLineCount = 0;
+
+          // 初始化状态
+          resultText.value = "";
+          message.className = "text-gray-500";
+          message.textContent = "";
+
+          // 验证输入
+          if (!inputText) {
+            message.className = "bg-red-50 text-danger p-3 rounded-md";
+            message.textContent =
+              "错误：请先粘贴或输入“品规+数量”格式的原始数据！";
+            return;
+          }
+
+          // 解析原始数据
+          const lines = inputText
+            .split("\n")
+            .filter((line) => line.trim() !== "");
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            const [rawBrand, quantityStr] = line
+              .split("\t")
+              .map((item) => item.trim());
+
+            // 格式校验
+            if (!rawBrand || !quantityStr) {
+              message.className = "bg-red-50 text-danger p-3 rounded-md";
+              message.textContent = `错误：第${
+                i + 1
+              }行格式错误！请确保用制表符分隔“品规”和“数量”`;
+              resultText.value = "";
+              return;
+            }
+
+            // 括号转换 + 数量校验
+            const brand = convertBrackets(rawBrand);
+            const quantity = parseFloat(quantityStr);
+            if (isNaN(quantity)) {
+              message.className = "bg-red-50 text-danger p-3 rounded-md";
+              message.textContent = `错误：第${
+                i + 1
+              }行“数量”不是有效数字（当前值：${quantityStr}）`;
+              resultText.value = "";
+              return;
+            }
+
+            // 累加数量（保留1位小数）
+            summaryData[brand] = summaryData[brand]
+              ? parseFloat((summaryData[brand] + quantity).toFixed(1))
+              : quantity;
+            validLineCount++;
+          }
+
+          // 排序 + 去零行处理
+          let sortedData = Object.entries(summaryData).sort((a, b) =>
+            a[0].localeCompare(b[0])
+          );
+          const originalCount = sortedData.length;
+
+          if (removeZero) {
+            sortedData = sortedData.filter(
+              ([_, total]) => Math.abs(total) > 0.001
+            );
+            if (sortedData.length === 0) {
+              message.className = "bg-red-50 text-danger p-3 rounded-md";
+              message.textContent =
+                "错误：所有品规汇总后数量均为0，无有效数据可显示！";
+              return;
+            }
+          }
+
+          // 生成结果文本
+          let result = "";
+          if (addIndex) {
+            result += "序号	品规	总数量\n";
+          } else {
+            result += "品规	总数量\n";
+          }
+
+          sortedData.forEach(([brand, total], index) => {
+            if (addIndex) {
+              result += `${index + 1}\t${brand}\t${total}\n`;
+            } else {
+              result += `${brand}\t${total}\n`;
+            }
+          });
+
+          // 显示结果 + 提示信息
+          resultText.value = result.trim();
+          let successMsg = `成功：处理${validLineCount}行有效数据，汇总${sortedData.length}个品规！`;
+          if (addIndex) successMsg += "（已生成序号列）";
+          if (removeZero)
+            successMsg += `（已去除${
+              originalCount - sortedData.length
+            }条数量为0的行）`;
+
+          message.className = "bg-green-50 text-success p-3 rounded-md";
+          message.textContent = successMsg;
+        });
+
+      // 复制原始汇总结果
+      document.getElementById("copyBtn").addEventListener("click", function () {
+        copyToClipboard(
+          "resultText",
+          "汇总结果已复制，打开Excel直接粘贴即可！"
+        );
+      });
+
+      // 复制分两列结果
+      document
+        .getElementById("copyTwoColBtn")
+        .addEventListener("click", function () {
+          const resultText = document.getElementById("resultText");
+          const message = document.getElementById("message");
+          const addIndex = document.getElementById("addIndex").checked;
+          const removeZero = document.getElementById("removeZero").checked;
+
+          if (!resultText.value.trim()) {
+            message.className = "bg-red-50 text-danger p-3 rounded-md";
+            message.textContent = "错误：暂无汇总结果可分列，请先生成汇总！";
+            return;
+          }
+
+          const summaryLines = resultText.value
+            .split("\n")
+            .filter((line) => line.trim() !== "");
+          if (summaryLines.length <= 1) {
+            message.className = "bg-red-50 text-danger p-3 rounded-md";
+            message.textContent = "错误：数据量不足，无法分两列！";
+            return;
+          }
+
+          // 拆分表头和数据行
+          const header = summaryLines[0];
+          const dataLines = summaryLines.slice(1);
+          const totalDataCount = dataLines.length;
+          const midIndex = Math.ceil(totalDataCount / 2);
+          const leftCol = dataLines.slice(0, midIndex);
+          const rightCol = dataLines.slice(midIndex);
+
+          // 拼接两列结果
+          let twoColResult = `${header}\t${header}\n`;
+          for (let i = 0; i < Math.max(leftCol.length, rightCol.length); i++) {
+            const leftLine = leftCol[i] || "";
+            const rightLine = rightCol[i] || "";
+            twoColResult += `${leftLine}\t${rightLine}\n`;
+          }
+
+          // 复制到剪贴板
+          const tempTextarea = document.createElement("textarea");
+          tempTextarea.value = twoColResult.trim();
+          document.body.appendChild(tempTextarea);
+          tempTextarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(tempTextarea);
+
+          // 提示信息
+          let successMsg = `成功：已将${totalDataCount}条数据平均分两列复制`;
+          if (addIndex) successMsg += "（含序号列）";
+          if (removeZero) successMsg += "（已去除零数量行）";
+          successMsg += "，粘贴到Excel自动分栏！";
+
+          message.className = "bg-green-50 text-success p-3 rounded-md";
+          message.textContent = successMsg;
+        });
+
+      // 通用剪贴板函数
+      function copyToClipboard(textareaId, successMsg) {
+        const textarea = document.getElementById(textareaId);
+        const message = document.getElementById("message");
+
+        if (!textarea.value.trim()) {
+          message.className = "bg-red-50 text-danger p-3 rounded-md";
+          message.textContent = "错误：暂无结果可复制，请先生成汇总！";
+          return;
+        }
+
+        try {
+          navigator.clipboard
+            .writeText(textarea.value)
+            .then(() => {
+              message.className = "bg-green-50 text-success p-3 rounded-md";
+              message.textContent = successMsg;
+            })
+            .catch(() => {
+              textarea.select();
+              document.execCommand("copy");
+              message.className = "bg-green-50 text-success p-3 rounded-md";
+              message.textContent = successMsg;
+            });
+        } catch (err) {
+          textarea.select();
+          document.execCommand("copy");
+          message.className = "bg-green-50 text-success p-3 rounded-md";
+          message.textContent = successMsg;
+        }
+      }
+    </script>
+  </body>
+</html>

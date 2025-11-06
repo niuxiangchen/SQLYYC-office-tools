@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel专用批量超链接工具（跨平台版：Windows+macOS）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#3b82f6",
+              secondary: "#64748b",
+              success: "#10b981",
+              warning: "#f59e0b",
+              danger: "#ef4444",
+              dark: "#1e293b",
+            },
+            fontFamily: {
+              inter: ["Inter", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .content-auto {
+          content-visibility: auto;
+        }
+        .text-shadow {
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .transition-all-300 {
+          transition: all 0.3s ease;
+        }
+        .watermark {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 999;
+          pointer-events: none;
+          opacity: 0.05;
+          font-size: 10rem;
+          font-weight: bold;
+          color: #000;
+          transform: rotate(-30deg);
+          transform-origin: center;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .file-item {
+          @apply flex items-center justify-between p-2 border-b border-gray-100 hover:bg-gray-50 transition-all-300;
+        }
+        .file-icon {
+          @apply w-6 h-6 flex items-center justify-center rounded mr-2;
+        }
+        .warning-box {
+          @apply bg-amber-50 border-l-4 border-warning p-3 rounded-r-lg mb-6;
+        }
+        .path-note {
+          @apply bg-blue-50 border-l-4 border-primary p-3 rounded-r-lg mb-6 text-sm text-gray-700;
+        }
+        .error-box {
+          @apply bg-red-50 border-l-4 border-danger p-3 rounded-r-lg mb-6 text-sm text-gray-700;
+        }
+        .system-badge {
+          @apply inline-block px-2 py-0.5 text-xs font-medium rounded-full ml-2;
+        }
+        .windows-badge {
+          @apply bg-blue-100 text-blue-700;
+        }
+        .macos-badge {
+          @apply bg-gray-100 text-gray-700;
+        }
+      }
+    </style>
+  </head>
+  <body class="font-inter bg-gray-50 min-h-screen flex flex-col relative">
+    <!-- 水印层 -->
+    <div class="watermark">sqyc_nxc</div>
+    <!-- 头部 -->
+    <header class="bg-primary text-white py-6 shadow-md relative z-10">
+      <div class="container mx-auto px-4 md:px-6 relative">
+        <!-- 返回工具箱首页链接（绝对定位右侧） -->
+        <a
+          href="index.html"
+          class="absolute top-1/2 right-4 md:right-6 -translate-y-1/2 text-white/90 hover:text-white transition-all duration-300 flex items-center text-sm md:text-base bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
+        >
+          <i class="fa fa-home mr-1"></i> 返回工具箱首页
+        </a>
+
+        <!-- 标题区域（保持居中） -->
+        <div class="text-center">
+          <h1 class="text-[clamp(1.5rem,3vw,2.2rem)] font-bold text-shadow">
+            <i class="fa fa-link mr-2"></i>Excel专用批量超链接工具
+          </h1>
+          <p class="text-center mt-2 text-blue-100 text-sm md:text-base">
+            支持相对/绝对路径+双系统自动适配路径格式
+          </p>
+          <div
+            class="text-center mt-1 text-xs text-blue-200"
+            id="systemDetectHint"
+          >
+            <!-- 系统自动识别提示将在这里显示 -->
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 md:px-6 py-8 relative z-10">
+      <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <!-- 使用说明 -->
+        <div class="mb-8 bg-blue-50 border-l-4 border-primary p-4 rounded-r-lg">
+          <h3 class="text-primary font-medium mb-2 flex items-center">
+            <i class="fa fa-book mr-2"></i>使用说明
+          </h3>
+          <ol class="list-decimal list-inside text-sm text-gray-700 space-y-1">
+            <li>
+              工具会自动识别您的操作系统（Windows/macOS）并适配对应的路径格式
+            </li>
+            <li>
+              核心路径要求：Excel
+              文件和所有素材文件必须放在同一个文件夹内，且Excel
+              文件需位于该文件夹的根目录（确保相对路径生效）
+            </li>
+
+            <li>
+              可自定义超链接显示文本，留空则使用文件名 点击 "生成 Excel 公式"
+            </li>
+            <li>获取可直接粘贴到 Excel 的公式 "清理无效行"</li>
+            <li>可自动移除不符合当前系统格式的路径</li>
+            <ul>
+              方式1：上传文件所在目录，自动生成相对路径（推荐）
+            </ul>
+            <ul>
+              方式2：手动输入路径，每行一个，支持相对路径、绝对路径和网址
+            </ul>
+          </ol>
+        </div>
+
+        <!-- 上传文件夹区域（跨平台优化：仅生成相对路径）- 保留 -->
+        <div
+          class="mb-8 border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-all-300"
+        >
+          <label for="folderInput" class="cursor-pointer">
+            <div class="text-center">
+              <i class="fa fa-folder-open text-4xl text-gray-400 mb-3"></i>
+              <h3 class="text-dark font-medium mb-2">
+                上传目标文件所在目录（仅生成相对路径）
+              </h3>
+              <p class="text-gray-500 text-sm mb-4" id="uploadHint">
+                <!-- 系统专属上传提示将在这里显示 -->
+              </p>
+
+              <input
+                id="folderInput"
+                type="file"
+                webkitdirectory
+                directory
+                class="hidden"
+                accept="*"
+              />
+            </div>
+          </label>
+
+          <!-- 上传文件列表预览（仅显示相对路径） -->
+          <div id="fileListPreview" class="mt-6 hidden">
+            <div
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
+            >
+              <h4 class="text-dark font-medium flex items-center">
+                <i class="fa fa-files-o mr-2 text-primary"></i>已识别文件（<span
+                  id="fileCount"
+                  >0</span
+                >
+                个）
+              </h4>
+              <div class="flex items-center gap-3">
+                <div
+                  id="excelDetectHint"
+                  class="text-sm font-medium text-green-600 hidden"
+                >
+                  <i class="fa fa-check-circle mr-1"></i
+                  >已检测到Excel文件（相对路径基准有效）
+                </div>
+                <div class="text-sm text-gray-500">
+                  系统：<span id="systemLabel">未知</span> | 路径类型：相对路径
+                </div>
+                <button
+                  id="clearFileListBtn"
+                  class="text-sm text-gray-500 hover:text-danger transition-all-300"
+                >
+                  <i class="fa fa-trash-o mr-1"></i>清空
+                </button>
+              </div>
+            </div>
+            <div
+              id="fileList"
+              class="max-h-40 overflow-y-auto bg-gray-50 rounded-lg p-2"
+            >
+              <!-- 文件列表将动态生成（仅显示相对路径） -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 输入区域（跨平台优化：双系统示例，保留相对和绝对路径手动输入） -->
+        <div class="mb-8">
+          <label for="urlInput" class="block text-dark font-medium mb-2">
+            <i class="fa fa-keyboard-o mr-1"></i
+            >手动输入路径（每行一个，支持相对路径和绝对路径，工具自动校验格式）
+          </label>
+          <textarea
+            id="urlInput"
+            class="w-full h-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 resize-none"
+            placeholder="=== Windows系统示例 ===
+相对路径：
+报告1.xlsx
+资料\营销方案.pdf
+../上级目录\项目计划.docx
+绝对路径（手动输入）：
+D:\项目资料\报告1.xlsx
+C:\Users\用户名\文档\资料\营销方案.pdf
+
+=== macOS系统示例 ===
+相对路径：
+报告1.xlsx
+资料/营销方案.pdf
+../上级目录/项目计划.docx
+绝对路径（手动输入）：
+/Users/用户名/文档/项目资料/报告1.xlsx
+~/文档/资料/营销方案.pdf（~=用户目录）
+
+网址示例（双系统通用）：
+https://www.baidu.com
+
+❌ 错误示例（双系统通用）：
+资料/营销方案.pdf（Windows系统用了/）
+资料\营销方案.pdf（macOS系统用了\）
+资料\营销方案 2.pdf（含空格）
+/Users/用户名/文档/营销方案！.pdf（含特殊字符）"
+          ></textarea>
+          <div id="pathCheckResult" class="mt-2 text-xs hidden"></div>
+        </div>
+
+        <!-- 显示文本设置（保留） -->
+        <div class="mb-8">
+          <label for="linkText" class="block text-dark font-medium mb-2">
+            <i class="fa fa-font mr-1"></i
+            >超链接显示文本（可选，留空则使用文件名）
+          </label>
+          <input
+            type="text"
+            id="linkText"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+            placeholder="例如：点击查看报告、项目资料（所有链接统一显示文本）"
+          />
+          <div class="mt-2 text-sm text-gray-500">
+            <i class="fa fa-lightbulb-o mr-1"></i
+            >提示：留空将自动显示文件名（如：营销方案.pdf），更直观
+          </div>
+        </div>
+
+        <!-- 操作按钮（增加清理无效行按钮） -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-8">
+          <button
+            id="convertBtn"
+            class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg shadow transition-all-300 flex items-center justify-center"
+          >
+            <i class="fa fa-magic mr-2"></i>生成Excel公式
+          </button>
+          <button
+            id="copyBtn"
+            class="flex-1 bg-success hover:bg-success/90 text-white font-medium py-3 px-6 rounded-lg shadow transition-all-300 flex items-center justify-center"
+            disabled
+          >
+            <i class="fa fa-copy mr-2"></i>复制所有公式
+          </button>
+          <button
+            id="clearBtn"
+            class="flex-1 bg-gray-200 hover:bg-gray-300 text-dark font-medium py-3 px-6 rounded-lg shadow transition-all-300 flex items-center justify-center"
+          >
+            <i class="fa fa-eraser mr-2"></i>清空内容
+          </button>
+          <button
+            id="cleanInvalidBtn"
+            class="hidden flex-1 bg-warning hover:bg-warning/90 text-white font-medium py-3 px-6 rounded-lg shadow transition-all-300 flex items-center justify-center"
+          >
+            <i class="fa fa-filter mr-2"></i>清理无效行
+          </button>
+        </div>
+
+        <!-- 预览区域（跨平台优化：显示系统+路径类型标记） -->
+        <div class="mb-6">
+          <h3 class="text-dark font-medium mb-3 flex items-center">
+            <i class="fa fa-eye mr-2 text-primary"></i
+            >Excel中显示效果预览（绿色=有效，红色=无效）
+          </h3>
+          <div
+            id="previewArea"
+            class="border border-gray-200 rounded-lg p-4 min-h-[100px] bg-gray-50 overflow-auto"
+          >
+            <div class="text-gray-400 text-center py-8">
+              <i class="fa fa-file-text-o text-4xl mb-2 block"></i>
+              生成的超链接效果将在这里预览（含系统+路径类型标记）
+            </div>
+          </div>
+        </div>
+
+        <!-- 公式区域（跨平台优化：显示当前系统） -->
+        <div>
+          <h3 class="text-dark font-medium mb-3 flex items-center">
+            <i class="fa fa-code mr-2 text-primary"></i
+            ><span id="systemFormulaLabel">Windows</span>
+            Excel原生公式（直接复制粘贴，按Enter激活）
+          </h3>
+          <div
+            id="codeArea"
+            class="border border-gray-200 rounded-lg p-4 bg-gray-900 text-gray-100 font-mono text-sm min-h-[100px] overflow-auto whitespace-pre-wrap"
+          >
+            <span class="text-gray-500"
+              >// 点击"生成Excel公式"后显示公式（自动适配当前系统格式）</span
+            >
+          </div>
+          <div class="mt-2 text-xs text-gray-500">
+            <i class="fa fa-lightbulb-o mr-1"></i
+            >公式格式说明：=HYPERLINK("路径","显示文本") |
+            <span id="systemSeparatorHint"
+              >Windows系统：路径分隔符为\；macOS系统：路径分隔符为/</span
+            >
+            | 网址需手动添加https://协议 | 绝对路径需手动输入并确保格式正确
+          </div>
+        </div>
+        <!-- 联系方式备注 -->
+        <div class="mt-6 text-right text-sm text-gray-500">
+          <p>短号：65048<br />邮箱：1415055998@qq.com</p>
+        </div>
+        <!-- 友情链接 -->
+        <!-- <div class="mt-8 pt-6 border-t border-gray-200">
+          <h3 class="text-dark font-medium mb-3">友情链接</h3>
+          <div class="flex flex-wrap gap-4">
+            <a
+              href="summary-tool.html"
+              class="flex items-center text-blue-600 hover:text-blue-800"
+            >
+              <i class="fa fa-calculator mr-2"></i>品规数量分类汇总工具
+            </a>
+            <a
+              href="https://github.com/niuxiangchen/Simple-classification-and-summary"
+              target="_blank"
+              class="flex items-center text-gray-600 hover:text-gray-800"
+            >
+              <i class="fa fa-github mr-2"></i>分类汇总工具源码
+            </a>
+            <a
+              href="index.html"
+              class="flex items-center text-green-600 hover:text-green-800"
+            >
+              <i class="fa fa-home mr-2"></i>返回工具箱首页
+            </a>
+          </div>
+        </div> -->
+      </div>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="bg-dark text-gray-400 py-6 mt-12 relative z-10">
+      <div class="container mx-auto px-4 md:px-6 text-center text-sm">
+        <p>
+          © 2025 Excel专用批量超链接工具 |
+          跨平台版（Windows+macOS），支持相对/绝对路径
+        </p>
+        <p class="mt-1">
+          适配Excel 2016/2019/365（Windows）、Excel for Mac
+          2016/2019/365，自动适配系统路径格式
+        </p>
+      </div>
+    </footer>
+
+    <!-- 提示弹窗 -->
+    <div
+      id="toast"
+      class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-all-300 z-50 flex items-center"
+    >
+      <i id="toastIcon" class="mr-2"></i>
+      <span id="toastText"></span>
+    </div>
+
+    <script>
+      // DOM元素
+      const folderInput = document.getElementById("folderInput");
+      const fileListPreview = document.getElementById("fileListPreview");
+      const fileList = document.getElementById("fileList");
+      const fileCount = document.getElementById("fileCount");
+      const clearFileListBtn = document.getElementById("clearFileListBtn");
+      const urlInput = document.getElementById("urlInput");
+      const linkText = document.getElementById("linkText");
+      const cleanInvalidBtn = document.getElementById("cleanInvalidBtn"); // 新增清理按钮
+      const convertBtn = document.getElementById("convertBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const previewArea = document.getElementById("previewArea");
+      const codeArea = document.getElementById("codeArea");
+      const toast = document.getElementById("toast");
+      const toastIcon = document.getElementById("toastIcon");
+      const toastText = document.getElementById("toastText");
+      const pathCheckResult = document.getElementById("pathCheckResult");
+      const excelDetectHint = document.getElementById("excelDetectHint");
+      const systemDetectHint = document.getElementById("systemDetectHint");
+      const uploadHint = document.getElementById("uploadHint");
+      const systemLabel = document.getElementById("systemLabel");
+      const systemFormulaLabel = document.getElementById("systemFormulaLabel");
+      const systemSeparatorHint = document.getElementById(
+        "systemSeparatorHint"
+      );
+
+      // 核心跨平台变量
+      let isWindows = true; // 默认Windows，将自动识别
+      let filePaths = []; // 格式：[{fileName: 文件名, windowsRelative: Windows相对路径, macRelative: macOS相对路径, isExcel: 是否为Excel文件}]
+      let baseDirectory = ""; // 基准目录（用于相对路径计算）
+      let hasExcelFile = false; // 是否检测到Excel文件
+
+      // 第一步：自动识别操作系统（核心跨平台功能）
+      function detectOS() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.includes("mac os")) {
+          isWindows = false;
+          systemDetectHint.innerHTML = `已识别当前系统：macOS <span class="system-badge macos-badge">MAC</span> | 路径格式将自动适配/分隔符`;
+          uploadHint.textContent = `macOS提示：上传时请授予浏览器文件访问权限，尽量选择英文目录（避免中文目录兼容性问题），仅生成相对路径`;
+          systemLabel.textContent = "macOS";
+          systemFormulaLabel.textContent = "macOS";
+          systemSeparatorHint.textContent =
+            "macOS系统：路径分隔符为/；Windows系统：路径分隔符为\\";
+          showToast("已自动适配macOS系统，路径格式将使用/分隔符", "info");
+        } else {
+          isWindows = true;
+          systemDetectHint.innerHTML = `已识别当前系统：Windows <span class="system-badge windows-badge">WIN</span> | 路径格式将自动适配\分隔符`;
+          uploadHint.textContent = `Windows提示：上传Excel所在的根目录，确保Excel已保存（相对路径需基准目录），仅生成相对路径`;
+          systemLabel.textContent = "Windows";
+          systemFormulaLabel.textContent = "Windows";
+          systemSeparatorHint.textContent =
+            "Windows系统：路径分隔符为\\；macOS系统：路径分隔符为/";
+          showToast("已自动适配Windows系统，路径格式将使用\\分隔符", "info");
+        }
+      }
+
+      // 显示提示（保留）
+      function showToast(message, type = "success") {
+        toastText.textContent = message;
+
+        if (type === "success") {
+          toast.className =
+            "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg bg-success text-white transform translate-x-0 transition-all-300 z-50 flex items-center";
+          toastIcon.className = "fa fa-check-circle mr-2";
+        } else if (type === "error") {
+          toast.className =
+            "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg bg-danger text-white transform translate-x-0 transition-all-300 z-50 flex items-center";
+          toastIcon.className = "fa fa-exclamation-circle mr-2";
+        } else if (type === "warning") {
+          toast.className =
+            "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg bg-warning text-white transform translate-x-0 transition-all-300 z-50 flex items-center";
+          toastIcon.className = "fa fa-exclamation-triangle mr-2";
+        } else if (type === "info") {
+          toast.className =
+            "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg bg-primary text-white transform translate-x-0 transition-all-300 z-50 flex items-center";
+          toastIcon.className = "fa fa-info-circle mr-2";
+        }
+
+        setTimeout(() => {
+          toast.className =
+            "fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-all-300 z-50 flex items-center";
+        }, 3000);
+      }
+
+      // 根据文件扩展名获取图标（保留）
+      function getFileIcon(fileName) {
+        const ext = fileName.split(".").pop().toLowerCase();
+        switch (ext) {
+          case "xlsx":
+          case "xls":
+            return '<i class="fa fa-file-excel-o text-green-600"></i>';
+          case "docx":
+          case "doc":
+            return '<i class="fa fa-file-word-o text-blue-600"></i>';
+          case "pdf":
+            return '<i class="fa fa-file-pdf-o text-red-600"></i>';
+          case "csv":
+            return '<i class="fa fa-file-text-o text-orange-600"></i>';
+          case "ppt":
+          case "pptx":
+            return '<i class="fa fa-file-powerpoint-o text-orange-500"></i>';
+          case "jpg":
+          case "png":
+          case "gif":
+            return '<i class="fa fa-file-image-o text-purple-600"></i>';
+          default:
+            return '<i class="fa fa-file-o text-gray-500"></i>';
+        }
+      }
+
+      // 跨平台路径处理工具函数（保留所有路径校验功能）
+      const PathUtils = {
+        // 检查路径是否包含无效字符（双系统通用）
+        hasInvalidCharsOrSpace: function (path) {
+          const invalidChars =
+            /[！@#￥%……&*（）——+={}【】｜、；：""''《》，。？、`~￥　]/;
+          return invalidChars.test(path) || /\s/.test(path);
+        },
+
+        // 检查Windows路径分隔符是否合法（仅允许\）
+        isWindowsSeparatorValid: function (path) {
+          return !/\/|\\u3001|\\uff0c/.test(path);
+        },
+
+        // 检查macOS路径分隔符是否合法（仅允许/）
+        isMacSeparatorValid: function (path) {
+          return !/\\|\\u3001|\\uff0c/.test(path);
+        },
+
+        // Windows相对路径格式校验
+        isInvalidWindowsRelative: function (path) {
+          const validFormat = /^(\.\.\\|[\w\u4e00-\u9fa5])/;
+          return (
+            !validFormat.test(path) ||
+            !this.isWindowsSeparatorValid(path) ||
+            this.hasInvalidCharsOrSpace(path)
+          );
+        },
+
+        // Windows绝对路径格式校验
+        isInvalidWindowsAbsolute: function (path) {
+          const validFormat = /^[A-Za-z]:\\/;
+          return (
+            !validFormat.test(path) ||
+            !this.isWindowsSeparatorValid(path) ||
+            this.hasInvalidCharsOrSpace(path)
+          );
+        },
+
+        // macOS相对路径格式校验
+        isInvalidMacRelative: function (path) {
+          const validFormat = /^(\.\.\/|[\w\u4e00-\u9fa5])/;
+          return (
+            !validFormat.test(path) ||
+            !this.isMacSeparatorValid(path) ||
+            this.hasInvalidCharsOrSpace(path)
+          );
+        },
+
+        // macOS绝对路径格式校验
+        isInvalidMacAbsolute: function (path) {
+          const validFormat = /^(\/|~\/)/; // 支持/开头或~/用户目录开头
+          return (
+            !validFormat.test(path) ||
+            !this.isMacSeparatorValid(path) ||
+            this.hasInvalidCharsOrSpace(path)
+          );
+        },
+
+        // 检查是否为合法网址（双系统通用）
+        isValidUrl: function (path) {
+          return /^(https?:\/\/|ftp:\/\/|mailto:|tel:)/i.test(path);
+        },
+
+        // 根据系统转换路径分隔符
+        convertSeparator: function (path, toWindows = true) {
+          if (toWindows) {
+            return path.replace(/\//g, "\\").replace(/\\\\+/g, "\\");
+          } else {
+            return path.replace(/\\/g, "/").replace(/\/\/+/g, "/");
+          }
+        },
+
+        // 生成macOS用户目录路径（~/替换为绝对路径）
+        expandMacUserDir: function (path) {
+          if (path.startsWith("~/")) {
+            return path.replace("~", "/Users/" + this.getMacUserName());
+          }
+          return path;
+        },
+
+        // 获取macOS用户名（简化版，实际通过路径解析）
+        getMacUserName: function () {
+          // 浏览器安全限制无法直接获取，这里返回占位符
+          return "用户名";
+        },
+
+        // 判断路径类型（相对/绝对）- 新增函数
+        getPathType: function (path, isWindows) {
+          if (this.isValidUrl(path)) return "url";
+          if (isWindows) {
+            return /^[A-Za-z]:\\/.test(path) ? "absolute" : "relative";
+          } else {
+            return /^(\/|~\/)/.test(path) ? "absolute" : "relative";
+          }
+        },
+
+        // 检查路径是否符合当前系统规则
+        isPathValidForCurrentSystem: function (path, isWindows) {
+          if (this.isValidUrl(path)) return true;
+
+          const pathType = this.getPathType(path, isWindows);
+
+          if (isWindows) {
+            if (pathType === "absolute") {
+              return !this.isInvalidWindowsAbsolute(path);
+            } else {
+              return !this.isInvalidWindowsRelative(path);
+            }
+          } else {
+            if (pathType === "absolute") {
+              return !this.isInvalidMacAbsolute(path);
+            } else {
+              return !this.isInvalidMacRelative(path);
+            }
+          }
+        },
+      };
+
+      // 更新文件列表显示（仅显示相对路径）
+      function updateFileListDisplay() {
+        if (filePaths.length === 0) return;
+
+        fileList.innerHTML = "";
+        filePaths.forEach((item) => {
+          const { fileName, windowsRelative, macRelative, isExcel } = item;
+          let displayPath = "";
+
+          // 根据系统选择相对路径
+          if (isWindows) {
+            displayPath = windowsRelative;
+          } else {
+            displayPath = macRelative;
+          }
+
+          const excelTag = isExcel
+            ? '<span class="inline-block ml-2 px-1 py-0.5 bg-green-100 text-green-700 text-xs rounded">Excel文件</span>'
+            : "";
+          const systemTag = isWindows
+            ? '<span class="system-badge windows-badge ml-1">WIN</span>'
+            : '<span class="system-badge macos-badge ml-1">MAC</span>';
+          const pathTypeTag =
+            '<span class="inline-block ml-1 px-1 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">相对路径</span>';
+
+          const fileItem = document.createElement("div");
+          fileItem.className = "file-item";
+
+          const icon = document.createElement("div");
+          icon.className = "file-icon";
+          icon.innerHTML = getFileIcon(fileName);
+
+          const fileInfo = document.createElement("div");
+          fileInfo.className = "flex-1 ml-2";
+          fileInfo.innerHTML = `
+                    <div class="text-sm font-medium text-dark">${fileName} ${excelTag} ${systemTag} ${pathTypeTag}</div>
+                    <div class="text-xs text-gray-500 truncate">相对路径：${displayPath}</div>
+                `;
+
+          fileItem.appendChild(icon);
+          fileItem.appendChild(fileInfo);
+          fileList.appendChild(fileItem);
+        });
+      }
+
+      // 更新输入框中的路径（仅填充相对路径）
+      function updateInputPaths() {
+        if (filePaths.length === 0) return;
+
+        const paths = filePaths
+          .filter((item) => !item.isExcel)
+          .map((item) => {
+            if (isWindows) {
+              return item.windowsRelative;
+            } else {
+              return item.macRelative;
+            }
+          });
+
+        urlInput.value = paths.join("\n");
+      }
+
+      // 处理文件夹上传（仅生成相对路径）
+      folderInput.addEventListener("change", (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+
+        filePaths = [];
+        fileList.innerHTML = "";
+        let invalidFiles = 0;
+        hasExcelFile = false;
+
+        // 获取基准目录（用于相对路径计算）
+        if (files[0].webkitRelativePath) {
+          const fullPathParts = files[0].webkitRelativePath.split("/");
+          baseDirectory = fullPathParts[0] || "根目录";
+        }
+
+        // 遍历所有文件，仅生成双系统的相对路径
+        Array.from(files).forEach((file) => {
+          const fileName = file.name;
+          const isExcel =
+            fileName.toLowerCase().endsWith(".xlsx") ||
+            fileName.toLowerCase().endsWith(".xls");
+
+          if (isExcel) {
+            hasExcelFile = true;
+          }
+
+          // 1. 检查文件名是否含无效字符（双系统都不允许）
+          if (PathUtils.hasInvalidCharsOrSpace(fileName)) {
+            invalidFiles++;
+            return;
+          }
+
+          // 2. 原始相对路径（浏览器返回的是/分隔）
+          const originalRelative = file.webkitRelativePath;
+          const relativeWithoutBase = originalRelative.startsWith(
+            baseDirectory + "/"
+          )
+            ? originalRelative.replace(baseDirectory + "/", "")
+            : originalRelative;
+
+          // 3. 生成Windows相对路径
+          const windowsRelative = PathUtils.convertSeparator(
+            relativeWithoutBase,
+            true
+          );
+
+          // 4. 生成macOS相对路径
+          const macRelative = PathUtils.convertSeparator(
+            relativeWithoutBase,
+            false
+          );
+
+          // 5. 存储相对路径数据
+          filePaths.push({
+            fileName: fileName,
+            windowsRelative: windowsRelative,
+            macRelative: macRelative,
+            isExcel: isExcel,
+          });
+        });
+
+        // 更新文件列表和输入框
+        updateFileListDisplay();
+        updateInputPaths();
+        fileCount.textContent = filePaths.length;
+        fileListPreview.classList.remove("hidden");
+
+        // 显示Excel检测结果
+        if (hasExcelFile) {
+          excelDetectHint.classList.remove("hidden");
+          if (isWindows) {
+            excelDetectHint.textContent =
+              "已检测到Excel文件（Windows相对路径基准有效）";
+          } else {
+            excelDetectHint.textContent =
+              "已检测到Excel文件（macOS相对路径基准有效）";
+          }
+        } else {
+          excelDetectHint.classList.add("hidden");
+        }
+
+        // 提示信息（跨平台适配）
+        if (invalidFiles > 0) {
+          showToast(
+            `成功识别 ${filePaths.length} 个文件，跳过 ${invalidFiles} 个含空格/特殊字符的文件`,
+            "warning"
+          );
+        } else {
+          if (isWindows) {
+            showToast(
+              `成功识别 ${filePaths.length} 个文件，已生成Windows相对路径`,
+              "success"
+            );
+          } else {
+            showToast(
+              `成功识别 ${filePaths.length} 个文件，已生成macOS相对路径`,
+              "success"
+            );
+          }
+        }
+
+        // 清空文件输入框（允许重新上传）
+        folderInput.value = "";
+      });
+
+      // 清空文件列表（保留，优化跨平台提示）
+      clearFileListBtn.addEventListener("click", () => {
+        filePaths = [];
+        baseDirectory = "";
+        hasExcelFile = false;
+        fileList.innerHTML = "";
+        fileCount.textContent = "0";
+        fileListPreview.classList.add("hidden");
+        excelDetectHint.classList.add("hidden");
+        urlInput.value = "";
+        pathCheckResult.classList.add("hidden");
+        showToast("文件列表已清空", "info");
+      });
+
+      // 清理无效行功能
+      cleanInvalidBtn.addEventListener("click", () => {
+        const addresses = urlInput.value
+          .trim()
+          .split("\n")
+          .filter((addr) => addr.trim());
+
+        if (addresses.length === 0) {
+          showToast("没有内容可清理", "info");
+          return;
+        }
+
+        let validLines = [];
+        let removedCount = 0;
+
+        addresses.forEach((addr) => {
+          if (PathUtils.isPathValidForCurrentSystem(addr.trim(), isWindows)) {
+            validLines.push(addr);
+          } else {
+            removedCount++;
+          }
+        });
+
+        urlInput.value = validLines.join("\n");
+
+        if (removedCount > 0) {
+          showToast(`已清理 ${removedCount} 行无效路径`, "success");
+        } else {
+          showToast("所有路径均有效，无需清理", "info");
+        }
+      });
+
+      // 格式化地址为Excel可用公式（支持相对和绝对路径）
+      function formatAddressForExcelFormula(address) {
+        const trimmedAddr = address.trim();
+        if (!trimmedAddr) return null;
+
+        // 1. 合法网址
+        if (PathUtils.isValidUrl(trimmedAddr)) {
+          return {
+            type: "url",
+            path: trimmedAddr,
+            valid: true,
+            display: trimmedAddr,
+            invalidReason: "",
+            system: "both",
+            pathType: "url",
+          };
+        }
+
+        // 2. 自动识别路径类型
+        const pathType = PathUtils.getPathType(trimmedAddr, isWindows);
+
+        // 3. 根据当前系统和路径类型处理
+        if (isWindows) {
+          // Windows系统处理
+          if (pathType === "absolute") {
+            // Windows绝对路径
+            if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "包含空格或中文特殊字符",
+                system: "windows",
+                pathType: "absolute",
+              };
+            }
+
+            if (!PathUtils.isWindowsSeparatorValid(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "使用了/或全角\\分隔符（Windows仅允许半角\\）",
+                system: "windows",
+                pathType: "absolute",
+              };
+            }
+
+            if (!PathUtils.isInvalidWindowsAbsolute(trimmedAddr)) {
+              return {
+                type: "windows-absolute-file",
+                path: trimmedAddr,
+                valid: true,
+                display: trimmedAddr,
+                invalidReason: "",
+                system: "windows",
+                pathType: "absolute",
+              };
+            } else {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason:
+                  "Windows绝对路径格式不合法（需以盘符开头，如D:\\）",
+                system: "windows",
+                pathType: "absolute",
+              };
+            }
+          } else {
+            // Windows相对路径
+            if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "包含空格或中文特殊字符",
+                system: "windows",
+                pathType: "relative",
+              };
+            }
+
+            if (!PathUtils.isWindowsSeparatorValid(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "使用了/或全角\\分隔符（Windows仅允许半角\\）",
+                system: "windows",
+                pathType: "relative",
+              };
+            }
+
+            if (!PathUtils.isInvalidWindowsRelative(trimmedAddr)) {
+              return {
+                type: "windows-relative-file",
+                path: trimmedAddr,
+                valid: true,
+                display: trimmedAddr,
+                invalidReason: "",
+                system: "windows",
+                pathType: "relative",
+              };
+            } else {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason:
+                  "Windows相对路径格式不合法（仅支持同目录/子目录/../上级目录）",
+                system: "windows",
+                pathType: "relative",
+              };
+            }
+          }
+        } else {
+          // macOS系统处理
+          if (pathType === "absolute") {
+            // macOS绝对路径
+            if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "包含空格或中文特殊字符",
+                system: "macos",
+                pathType: "absolute",
+              };
+            }
+
+            if (!PathUtils.isMacSeparatorValid(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "使用了\\或全角/分隔符（macOS仅允许/）",
+                system: "macos",
+                pathType: "absolute",
+              };
+            }
+
+            if (!PathUtils.isInvalidMacAbsolute(trimmedAddr)) {
+              return {
+                type: "mac-absolute-file",
+                path: trimmedAddr,
+                valid: true,
+                display: trimmedAddr,
+                invalidReason: "",
+                system: "macos",
+                pathType: "absolute",
+              };
+            } else {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason:
+                  "macOS绝对路径格式不合法（需以/或~/开头，如/Users/用户名/）",
+                system: "macos",
+                pathType: "absolute",
+              };
+            }
+          } else {
+            // macOS相对路径
+            if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "包含空格或中文特殊字符",
+                system: "macos",
+                pathType: "relative",
+              };
+            }
+
+            if (!PathUtils.isMacSeparatorValid(trimmedAddr)) {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason: "使用了\\或全角/分隔符（macOS仅允许/）",
+                system: "macos",
+                pathType: "relative",
+              };
+            }
+
+            if (!PathUtils.isInvalidMacRelative(trimmedAddr)) {
+              return {
+                type: "mac-relative-file",
+                path: trimmedAddr,
+                valid: true,
+                display: trimmedAddr,
+                invalidReason: "",
+                system: "macos",
+                pathType: "relative",
+              };
+            } else {
+              return {
+                type: "invalid",
+                path: trimmedAddr,
+                valid: false,
+                display: trimmedAddr,
+                invalidReason:
+                  "macOS相对路径格式不合法（仅支持同目录/子目录/../上级目录）",
+                system: "macos",
+                pathType: "relative",
+              };
+            }
+          }
+        }
+      }
+
+      // 生成Excel公式
+      convertBtn.addEventListener("click", () => {
+        const addresses = urlInput.value
+          .trim()
+          .split("\n")
+          .filter((addr) => addr.trim());
+
+        if (addresses.length === 0) {
+          showToast("请输入至少一个路径或网址", "warning");
+          return;
+        }
+
+        const customText = linkText.value.trim();
+        let formulas = [];
+        let previewHtml = [];
+        let validCount = 0;
+        let invalidCount = 0;
+
+        addresses.forEach((addr) => {
+          const result = formatAddressForExcelFormula(addr);
+          if (!result) return;
+
+          // 确定显示文本
+          let displayText =
+            customText || result.path.split(isWindows ? "\\" : "/").pop();
+
+          // 处理公式
+          if (result.valid) {
+            validCount++;
+            let formula;
+            if (result.type === "url") {
+              formula = `=HYPERLINK("${result.path}","${displayText}")`;
+              previewHtml.push(
+                `<div class="mb-2"><a href="${result.path}" class="text-green-600 hover:underline flex items-center"><i class="fa fa-external-link mr-2"></i>${displayText} <span class="text-xs ml-2 px-1 bg-blue-100 text-blue-700 rounded">网址</span></a></div>`
+              );
+            } else {
+              formula = `=HYPERLINK("${result.path}","${displayText}")`;
+              const pathTypeTag =
+                result.pathType === "absolute"
+                  ? '<span class="text-xs ml-2 px-1 bg-purple-100 text-purple-700 rounded">绝对路径</span>'
+                  : '<span class="text-xs ml-2 px-1 bg-blue-100 text-blue-700 rounded">相对路径</span>';
+              const systemTag = isWindows
+                ? '<span class="system-badge windows-badge ml-1">WIN</span>'
+                : '<span class="system-badge macos-badge ml-1">MAC</span>';
+              previewHtml.push(
+                `<div class="mb-2"><span class="text-green-600 flex items-center"><i class="fa fa-file-o mr-2"></i>${displayText} ${pathTypeTag} ${systemTag}</span></div>`
+              );
+            }
+            formulas.push(formula);
+          } else {
+            invalidCount++;
+            previewHtml.push(
+              `<div class="mb-2"><span class="text-red-600 flex items-center"><i class="fa fa-exclamation-circle mr-2"></i>${result.display} <span class="text-xs ml-2 px-1 bg-red-100 text-red-700 rounded">无效：${result.invalidReason}</span></span></div>`
+            );
+          }
+        });
+
+        // 更新预览和公式区域
+        codeArea.textContent = formulas.join("\n");
+        previewArea.innerHTML = previewHtml.join("");
+
+        // 启用复制按钮
+        copyBtn.disabled = formulas.length === 0;
+
+        // 显示结果统计
+        if (invalidCount > 0) {
+          showToast(
+            `已生成 ${validCount} 个有效公式，发现 ${invalidCount} 个无效路径`,
+            "warning"
+          );
+        } else {
+          showToast(`成功生成 ${validCount} 个Excel公式`, "success");
+        }
+      });
+
+      // 复制公式
+      copyBtn.addEventListener("click", () => {
+        const textToCopy = codeArea.textContent;
+        if (!textToCopy || textToCopy.includes("//")) {
+          showToast("没有可复制的公式", "error");
+          return;
+        }
+
+        navigator.clipboard
+          .writeText(textToCopy)
+          .then(() => {
+            showToast("公式已复制到剪贴板，可直接粘贴到Excel中", "success");
+          })
+          .catch(() => {
+            // 备用复制方法
+            const textarea = document.createElement("textarea");
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            showToast("公式已复制到剪贴板，可直接粘贴到Excel中", "success");
+          });
+      });
+
+      // 清空内容
+      clearBtn.addEventListener("click", () => {
+        urlInput.value = "";
+        linkText.value = "";
+        previewArea.innerHTML = `
+          <div class="text-gray-400 text-center py-8">
+            <i class="fa fa-file-text-o text-4xl mb-2 block"></i>
+            生成的超链接效果将在这里预览（含系统+路径类型标记）
+          </div>
+        `;
+        codeArea.innerHTML = `<span class="text-gray-500">// 点击"生成Excel公式"后显示公式（自动适配当前系统格式）</span>`;
+        pathCheckResult.classList.add("hidden");
+        copyBtn.disabled = true;
+        showToast("所有输入内容已清空", "info");
+      });
+
+      // 页面加载时自动识别系统
+      window.addEventListener("load", detectOS);
+    </script>
+  </body>
+</html>
