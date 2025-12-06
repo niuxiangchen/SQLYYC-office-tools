@@ -1,6 +1,6 @@
 # SQLYYC内勤工具箱 🛠️
 
-高效办公工具集合，专为内勤工作场景设计，整合两大核心工具，纯前端实现无需后端依赖，支持离线使用，数据本地处理保护隐私安全。
+高效办公工具集合，专为内勤工作场景设计，整合三大核心工具，纯前端实现无需后端依赖，支持离线使用，数据本地处理保护隐私安全。
 
 ## 📦 工具清单
 
@@ -20,6 +20,15 @@
 - 📥 导出Excel文件（含日期命名优化）
 - 🔍 无效数据检测与友好提示
 
+### 3. AI回答转公文格式工具
+- 📄 适配党政机关标准公文格式（字体、行距、段落、标题层级）
+- 🤖 智能解析AI生成文本，自动拆分段落/调整缩进/规范标点
+- ✨ 一键格式化：标题居中、正文首行缩进2字符、落款对齐等
+- 🎨 自定义样式：支持调整字体（仿宋/宋体）、字号、行间距
+- 📋 双输出模式：纯文本格式 / HTML格式（可直接粘贴到Word）
+- 🧹 自动清理AI冗余话术（如"您好！以下是..."等开场白）
+- 📥 导出为docx格式（保留公文格式样式）
+
 ## 🌐 在线使用
 直接访问GitHub Pages部署地址，无需下载安装：  
 👉 [https://niuxiangchen.github.io/SQLYYC-office-tools](https://niuxiangchen.github.io/SQLYYC-office-tools)
@@ -33,3 +42,6 @@
 1. 克隆本仓库到本地：
    ```bash
    git clone https://github.com/niuxiangchen/SQLYYC-office-tools.git
+   ```
+2. 进入仓库目录，直接打开 `index.html` 文件即可使用所有工具
+3. 如需离线使用，确保将所有工具页面（`hyperlink-tool.html`/`summary-tool.html`/`ai-official-doc-converter.html`）及依赖资源下载完整
