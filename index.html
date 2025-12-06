@@ -37,8 +37,9 @@
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-12">
-      <div class="max-w-4xl mx-auto">
-        <div class="grid md:grid-cols-2 gap-8">
+      <div class="max-w-5xl mx-auto">
+        <!-- 网格布局改为3列（中等屏幕及以上） -->
+        <div class="grid md:grid-cols-3 gap-8">
           <!-- Excel批量超链接工具 -->
           <div
             class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500"
@@ -72,6 +73,25 @@
             <a
               href="summary-tool.html"
               class="inline-flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors"
+            >
+              访问工具 <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+          </div>
+
+          <!-- AI回答转公文格式工具（新增） -->
+          <div
+            class="tool-card bg-white rounded-xl shadow-md p-6 border-t-4 border-purple-500"
+          >
+            <div class="text-purple-500 text-4xl mb-4">
+              <i class="fa fa-file-text-o"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">AI回答转公文格式工具</h2>
+            <p class="text-gray-600 mb-4">
+              将AI生成的回答快速转换为标准公文格式，支持段落排版、字体样式、格式规范一键调整，适配党政机关公文格式要求
+            </p>
+            <a
+              href="ai-official-doc-converter.html"
+              class="inline-flex items-center text-white bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg transition-colors"
             >
               访问工具 <i class="fa fa-arrow-right ml-2"></i>
             </a>
