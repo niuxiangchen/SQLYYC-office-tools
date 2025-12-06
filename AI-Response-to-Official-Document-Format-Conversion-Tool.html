@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI回答转公文格式工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+    />
+    <!-- 核心处理库 -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.5.0/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#c0392b",
+            },
+            boxShadow: {
+              paper: "0 2px 8px rgba(0,0,0,0.15)",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        /* 字体定义 */
+        .font-song { font-family: "SimSun", "Songti SC", serif; }
+        .font-fangsong { font-family: "FangSong", "FangSong_GB2312", "STFangsong", serif; }
+        .font-heiti { font-family: "SimHei", "Heiti SC", sans-serif; }
+        .font-kaiti { font-family: "KaiTi", "KaiTi_GB2312", "STKaiti", serif; }
+        .font-biaosong { font-family: "FZXiaoBiaoSong-B05S", "方正小标宋简体", "SimSun", serif; }
+
+        /* A4 纸张模拟 */
+        .a4-page {
+          width: 210mm;
+          height: 297mm;
+          background: white;
+          margin-bottom: 20px;
+          position: relative;
+          padding: 37mm 26mm 35mm 28mm; /* 上下左右 */
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          flex-shrink: 0;
+          overflow: hidden; 
+        }
+        
+        /* 内容弹性容器 */
+        .page-inner-container {
+            width: 100%;
+            height: 100%; 
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            position: relative;
+            z-index: 20; /* 确保文字在水印之上 */
+        }
+
+        /* 水印层样式 */
+        .watermark-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            overflow: hidden;
+        }
+
+        .watermark-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-30deg);
+            color: rgba(200, 200, 200, 0.35); /* 浅灰色半透明 */
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        @media print {
+          body { background: white; height: auto; overflow: visible; }
+          header, .control-panel, #toast { display: none !important; }
+          .preview-container { width: 100%; padding: 0; margin: 0; background: white; }
+          .a4-page { box-shadow: none; margin: 0; page-break-after: always; height: 297mm; width: 210mm; }
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans h-screen flex flex-col overflow-hidden text-gray-800">
+    
+    <!-- 顶栏 -->
+    <header class="bg-red-800 text-white shadow-md shrink-0 z-20">
+      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <i class="fa fa-file-text text-xl"></i>
+          <div>
+            <h1 class="text-lg font-bold tracking-wide">AI回答转公文格式工具</h1>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 text-sm">
+           <button id="importBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold shadow transition flex items-center">
+               <i class="fa fa-folder-open-o mr-2"></i> 导入 Word
+           </button>
+           <button id="downloadBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-bold shadow transition flex items-center">
+               <i class="fa fa-download mr-2"></i> 导出 Word
+           </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+      <!-- 左侧输入 -->
+      <div class="control-panel w-96 bg-white border-r border-gray-200 flex flex-col z-10 shadow-lg">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide" id="formContainer">
+            
+            <!-- 版头 -->
+            <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                <h3 class="text-xs font-bold text-red-800 mb-2">版头信息</h3>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <label class="text-xs text-gray-500">份号</label>
+                        <input type="text" id="docNumber" class="w-full text-sm border p-1 rounded" placeholder="如：001">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">密级</label>
+                        <select id="confidentiality" class="w-full text-sm border p-1 rounded">
+                            <option value="">无</option>
+                            <option value="秘密">秘密</option>
+                            <option value="机密">机密</option>
+                            <option value="绝密">绝密</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-500">发文字号</label>
+                        <input type="text" id="docCode" class="w-full text-sm border p-1 rounded" placeholder="如：国办发〔2025〕1号">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">签发人</label>
+                        <input type="text" id="signer" class="w-full text-sm border p-1 rounded" placeholder="如：张三">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 正文 -->
+            <div class="space-y-2">
+                <div>
+                    <label class="text-xs text-gray-500">发文机关标志 (红头文本)</label>
+                    <input type="text" id="redHeaderInput" class="w-full text-sm border p-1 rounded" placeholder="如：xx市人民政府文件">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700">标题 <span class="text-red-500">*</span></label>
+                    <textarea id="title" rows="2" class="w-full text-sm border p-1 rounded font-bold" placeholder="请输入公文标题..."></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700">主送机关</label>
+                    <input type="text" id="recipient" class="w-full text-sm border p-1 rounded" placeholder="如：各区县人民政府，市政府各部门">
+                </div>
+                <div class="flex flex-col h-96">
+                    <label class="text-xs font-bold text-gray-700 mb-1">正文内容</label>
+                    <textarea id="content" class="w-full flex-1 text-sm border p-2 rounded leading-relaxed resize-none focus:bg-white focus:ring-1 focus:ring-red-500 outline-none" placeholder="请输入或导入正文...
+
+支持自动格式转换：
+1. 列表自动转为中文序号（如：1. -> 一是）
+2. **粗体** 自动识别
+3. '---' 分隔线自动忽略"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">附件 (每行一个)</label>
+                    <textarea id="attachments" rows="3" class="w-full text-sm border p-1 rounded" placeholder="1. 实施方案
+2. 领导小组名单"></textarea>
+                </div>
+            </div>
+
+            <!-- 落款 -->
+            <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                <h3 class="text-xs font-bold text-red-800 mb-2">落款与版记</h3>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <label class="text-xs text-gray-500">发文机关署名</label>
+                        <input type="text" id="orgName" class="w-full text-sm border p-1 rounded" placeholder="如：xx市人民政府办公室">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">成文日期</label>
+                        <input type="date" id="date" class="w-full text-sm border p-1 rounded text-gray-600">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="text-xs text-gray-500">抄送机关</label>
+                    <textarea id="copyTo" rows="2" class="w-full text-sm border p-1 rounded" placeholder="如：市委各部门，市人大常委会办公厅"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-500">印发机关</label>
+                        <input type="text" id="printOrg" class="w-full text-sm border p-1 rounded" placeholder="如：市政府办公厅">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">印发日期</label>
+                        <input type="date" id="printDate" class="w-full text-sm border p-1 rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="fileInput" accept=".docx" class="hidden" />
+      </div>
+
+      <!-- 右侧预览 -->
+      <div class="flex-1 bg-gray-200 overflow-y-auto relative flex justify-center p-8 scrollbar-hide" id="previewContainer">
+        <div id="pagesWrapper" class="flex flex-col items-center gap-6">
+             <!-- 动态生成页面 -->
+             <div class="flex flex-col items-center justify-center h-96 text-gray-400">
+                <i class="fa fa-refresh fa-spin text-3xl mb-4"></i>
+                <p>正在初始化系统...</p>
+             </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="fixed top-20 right-5 transform translate-x-full transition-transform duration-300 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50 text-sm">
+        <span id="toastMsg">操作成功</span>
+    </div>
+
+    <script>
+        // --- 1. 初始化 ---
+        const els = {
+            form: document.querySelectorAll('#formContainer input, #formContainer textarea, #formContainer select'),
+            pagesWrapper: document.getElementById('pagesWrapper'),
+            fileInput: document.getElementById('fileInput'),
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 日期默认为空，不设置 value
+            
+            // 绑定事件
+            const importBtn = document.getElementById('importBtn');
+            if(importBtn) importBtn.addEventListener('click', () => els.fileInput.click());
+            
+            if(els.fileInput) els.fileInput.addEventListener('change', handleFileUpload);
+            
+            const dlBtn = document.getElementById('downloadBtn');
+            if(dlBtn) dlBtn.addEventListener('click', generateDocx);
+            
+            // 实时预览
+            let debounce;
+            els.form.forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(updatePreview, 300);
+                });
+            });
+            
+            setTimeout(updatePreview, 500); 
+        });
+
+        // --- 2. 文本处理逻辑 ---
+        
+        function toChineseNum(num) {
+            const chars = ['〇','一','二','三','四','五','六','七','八','九'];
+            if(num <= 10) return chars[num] || num;
+            if(num < 20) return '十' + (num%10===0?'':chars[num%10]);
+            if(num < 100) return chars[Math.floor(num/10)] + '十' + (num%10===0?'':chars[num%10]);
+            return num;
+        }
+
+        function processLineText(line) {
+            let processed = line.trim();
+            // 忽略分隔符
+            if (/^-{3,}$/.test(processed)) return null; 
+            // 转换列表: "1. 内容" -> "一是内容"
+            processed = processed.replace(/^(\d+)[\.．]\s*/, (match, num) => {
+                return toChineseNum(parseInt(num)) + "是";
+            });
+            return processed;
+        }
+
+        function formatPreviewHTML(text) {
+             let safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+             return safe.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        }
+
+        // --- 3. 预览渲染引擎 ---
+        function getFormData() {
+            return {
+                docNumber: document.getElementById('docNumber').value,
+                confidentiality: document.getElementById('confidentiality').value,
+                docCode: document.getElementById('docCode').value,
+                signer: document.getElementById('signer').value,
+                redHeader: document.getElementById('redHeaderInput').value,
+                title: document.getElementById('title').value,
+                recipient: document.getElementById('recipient').value,
+                content: document.getElementById('content').value,
+                attachments: document.getElementById('attachments').value,
+                orgName: document.getElementById('orgName').value,
+                date: document.getElementById('date').value,
+                copyTo: document.getElementById('copyTo').value,
+                printOrg: document.getElementById('printOrg').value,
+                printDate: document.getElementById('printDate').value,
+            };
+        }
+
+        function updatePreview() {
+            try {
+                const data = getFormData();
+                const wrapper = els.pagesWrapper;
+                if(!wrapper) return;
+                wrapper.innerHTML = ''; 
+
+                let currentPage = createPage();
+                let container = currentPage.querySelector('.page-inner-container');
+                wrapper.appendChild(currentPage);
+
+                const append = (el) => {
+                    container.appendChild(el);
+                    // 检查溢出
+                    if (container.scrollHeight > container.clientHeight + 4) {
+                        container.removeChild(el); 
+                        currentPage = createPage();
+                        container = currentPage.querySelector('.page-inner-container');
+                        wrapper.appendChild(currentPage);
+                        append(el); 
+                    }
+                };
+
+                // 版头
+                if (data.docNumber || data.confidentiality) {
+                    const div = el('div', 'flex justify-between mb-2 font-heiti text-base');
+                    div.innerHTML = `<span class="pl-2">${data.docNumber ? '份号：'+data.docNumber : ''}</span><span class="font-bold tracking-widest mr-4">${data.confidentiality}</span>`;
+                    append(div);
+                }
+
+                if (data.redHeader) {
+                    const h1 = el('h1', 'text-center mb-6 mt-6 text-red-600 font-song font-bold text-5xl tracking-widest leading-none', data.redHeader);
+                    append(h1);
+                } else {
+                    append(el('div', 'h-8')); 
+                }
+
+                const lineWrap = el('div', 'relative mb-10');
+                const hasHeaderContent = data.redHeader || data.docCode || data.signer;
+                const borderClass = hasHeaderContent ? 'border-t border-red-600' : '';
+                
+                let html = '';
+                if (data.signer) {
+                    html = `<div class="flex items-end justify-between px-1 pb-1">
+                            <span class="font-fangsong text-base">${data.docCode}</span>
+                            <div class="flex items-center space-x-4"><span class="font-fangsong text-base">签发人：</span><span class="font-kaiti text-base">${data.signer}</span></div>
+                            </div>`;
+                } else {
+                    html = `<div class="text-center pb-1"><span class="font-fangsong text-base">${data.docCode}</span></div>`;
+                }
+                html += `<div class="${borderClass} absolute bottom-[-1px] left-0 w-full"></div>`;
+                lineWrap.innerHTML = html;
+                append(lineWrap);
+
+                // 标题
+                const titleEl = el('div', 'font-biaosong text-3xl text-center mb-6 leading-normal font-bold px-4', data.title);
+                titleEl.style.lineHeight = "35pt";
+                append(titleEl);
+
+                // 主送
+                if (data.recipient) {
+                    append(el('div', 'font-fangsong text-xl mb-2 text-left pl-1', data.recipient + "："));
+                }
+
+                // 正文
+                if (data.content) {
+                    data.content.split('\n').forEach(line => {
+                        const processedLine = processLineText(line);
+                        
+                        if (processedLine === null) return; 
+                        if (!processedLine) return; 
+
+                        let className = "font-fangsong text-xl mb-0 text-justify";
+                        let style = "line-height: 30pt; text-indent: 2em;";
+
+                        if (/^[一二三四五六七八九十]+、/.test(processedLine)) {
+                            className = "font-heiti text-xl mb-0"; 
+                        } else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) {
+                            className = "font-kaiti text-xl mb-0 font-bold";
+                        } else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) {
+                            className = "font-fangsong text-xl mb-0 font-bold";
+                        }
+
+                        const p = el('p', className, '');
+                        p.innerHTML = formatPreviewHTML(processedLine);
+                        p.style.cssText = style;
+                        append(p);
+                    });
+                }
+
+                // 附件
+                if (data.attachments) {
+                    const atts = data.attachments.split('\n').filter(x => x.trim());
+                    if (atts.length) {
+                        append(el('div', 'h-4'));
+                        const p1 = el('div', 'font-fangsong text-xl pl-8 flex');
+                        p1.style.lineHeight = "30pt";
+                        p1.innerHTML = `<span class="whitespace-nowrap">附件：</span><span>${atts[0]}</span>`;
+                        append(p1);
+                        for(let i=1; i<atts.length; i++) {
+                            const p = el('div', 'font-fangsong text-xl pl-24', atts[i]);
+                            p.style.lineHeight = "30pt";
+                            append(p);
+                        }
+                    }
+                }
+
+                // 落款
+                append(el('div', 'h-16'));
+                
+                let footerHtml = `<div class="text-center mr-4">
+                                    <div class="mb-2" style="min-height:1em">${data.orgName}</div>`;
+                if(data.date) {
+                    footerHtml += `<div>${formatDateChinese(data.date)}</div>`;
+                }
+                footerHtml += `</div>`;
+                
+                const footerWrap = el('div', 'flex flex-col items-end pr-4 font-fangsong text-xl space-y-2');
+                footerWrap.innerHTML = footerHtml;
+                append(footerWrap);
+
+                // 版记
+                if (data.copyTo || data.printOrg) {
+                    const banjiBox = el('div', 'w-full text-lg font-fangsong pt-4 mt-auto');
+                    
+                    let bHtml = `<div class="border-t-2 border-red-500 mb-2"></div>`;
+                    if (data.copyTo) bHtml += `<div class="mb-2 px-2 flex text-justify"><span class="whitespace-nowrap">抄送：</span><span>${data.copyTo}</span></div>`;
+                    
+                    if (data.printOrg || data.printDate) {
+                        bHtml += `<div class="border-t border-dashed border-gray-400 my-2"></div>
+                                <div class="flex justify-between px-2 pt-1 pb-2">
+                                    <span>${data.printOrg}</span><span>${data.printDate ? formatDateChinese(data.printDate) + '印发' : ''}</span>
+                                </div>`;
+                    }
+                    bHtml += `<div class="border-t-2 border-red-500"></div>`;
+                    banjiBox.innerHTML = bHtml;
+
+                    container.appendChild(banjiBox);
+                    if (container.scrollHeight > container.clientHeight + 2) {
+                        container.removeChild(banjiBox);
+                        currentPage = createPage();
+                        container = currentPage.querySelector('.page-inner-container');
+                        wrapper.appendChild(currentPage);
+                        container.appendChild(banjiBox);
+                    }
+                }
+
+                // 页码
+                const pages = wrapper.querySelectorAll('.a4-page');
+                pages.forEach((p, i) => {
+                    if (i > 0) { 
+                        const slot = p.querySelector('.page-number-slot');
+                        if(slot) slot.innerText = `— ${i + 1} —`;
+                    }
+                });
+            } catch (e) {
+                console.error("Preview error:", e);
+            }
+        }
+
+        // --- 4. Word 导出 ---
+        function generateDocx() {
+            try {
+                const data = getFormData();
+                if (!data.title) return showToast("请输入标题");
+                
+                showToast("正在生成 Word...");
+                const { Document, Packer, Paragraph, TextRun, AlignmentType, Footer, PageNumber, Table, TableRow, TableCell, WidthType, BorderStyle } = docx;
+
+                const margins = { top: 2097, bottom: 1984, left: 1587, right: 1474 }; 
+                const children = [];
+
+                // 4.1 版头
+                if (data.docNumber || data.confidentiality) {
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: data.docNumber?`份号：${data.docNumber}`:'', font: "SimHei", size: 32 }),
+                            new TextRun({ text: "\t\t\t\t\t" }),
+                            new TextRun({ text: data.confidentiality, font: "SimHei", size: 32, bold: true })
+                        ]
+                    }));
+                }
+
+                // 4.2 红头
+                if (data.redHeader) {
+                    children.push(new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 },
+                        children: [ new TextRun({ text: data.redHeader, font: "SimSun", size: 116, color: "FF0000", bold: true }) ]
+                    }));
+                } else {
+                    children.push(new Paragraph(""));
+                }
+
+                // 4.3 发文字号与签发人
+                const invisibleBorder = { style: BorderStyle.NONE, size: 0, color: "auto" };
+                const noBorders = { top: invisibleBorder, bottom: invisibleBorder, left: invisibleBorder, right: invisibleBorder, insideVertical: invisibleBorder, insideHorizontal: invisibleBorder };
+
+                if (data.signer) {
+                    const headerTable = new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: noBorders,
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: data.docCode, font: "FangSong_GB2312", size: 32 })] })],
+                                        verticalAlign: "bottom",
+                                    }),
+                                    new TableCell({
+                                        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
+                                            new TextRun({ text: "签发人：", font: "FangSong_GB2312", size: 32 }),
+                                            new TextRun({ text: data.signer, font: "KaiTi_GB2312", size: 32 })
+                                        ] })],
+                                        verticalAlign: "bottom",
+                                    }),
+                                ],
+                            }),
+                        ],
+                    });
+                    children.push(headerTable);
+                } else {
+                    children.push(new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: data.docCode, font: "FangSong_GB2312", size: 32 })]
+                    }));
+                }
+
+                // 4.4 红线
+                if (data.redHeader || data.docCode || data.signer) {
+                    children.push(new Paragraph({
+                        border: { bottom: { color: "FF0000", space: 1, value: "single", size: 6 } },
+                        spacing: { after: 300 }
+                    }));
+                }
+                children.push(new Paragraph(""));
+
+                // 4.5 标题
+                children.push(new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { line: 700, lineRule: "exact", after: 400 },
+                    children: [ new TextRun({ text: data.title, font: "FZXiaoBiaoSong-B05S", size: 44, bold: true }) ]
+                }));
+
+                // 4.6 主送
+                if (data.recipient) {
+                    children.push(new Paragraph({
+                        spacing: { line: 600, lineRule: "exact" },
+                        children: [ new TextRun({ text: data.recipient + "：", font: "FangSong_GB2312", size: 32 }) ]
+                    }));
+                }
+
+                // 4.7 正文
+                if (data.content) {
+                    data.content.split('\n').forEach(line => {
+                        const processedLine = processLineText(line);
+                        
+                        if (processedLine === null) return; 
+                        if (!processedLine) return; 
+
+                        let font = "FangSong_GB2312";
+                        let bold = false;
+                        
+                        if (/^[一二三四五六七八九十]+、/.test(processedLine)) { font = "SimHei"; }
+                        else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) { font = "KaiTi_GB2312"; bold = true; }
+                        else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) { bold = true; }
+                        
+                        const parts = processedLine.split(/(\*\*.*?\*\*)/g);
+                        const runChildren = parts.map(part => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                                return new TextRun({
+                                    text: part.slice(2, -2),
+                                    font: font,
+                                    size: 32,
+                                    bold: true
+                                });
+                            } else {
+                                return new TextRun({
+                                    text: part,
+                                    font: font,
+                                    size: 32,
+                                    bold: bold
+                                });
+                            }
+                        });
+
+                        children.push(new Paragraph({
+                            indent: { firstLine: 640 },
+                            spacing: { line: 600, lineRule: "exact" },
+                            children: runChildren
+                        }));
+                    });
+                }
+
+                // 4.8 附件
+                if (data.attachments) {
+                    children.push(new Paragraph(""));
+                    const atts = data.attachments.split('\n').filter(x=>x.trim());
+                    atts.forEach((a, i) => {
+                        children.push(new Paragraph({
+                            indent: { firstLine: i===0?640:1600 },
+                            spacing: { line: 600, lineRule: "exact" },
+                            children: [ new TextRun({ text: (i===0?"附件：":"") + a, font: "FangSong_GB2312", size: 32 }) ]
+                        }));
+                    });
+                }
+
+                // 4.9 落款
+                children.push(new Paragraph("")); children.push(new Paragraph(""));
+                if (data.orgName) {
+                    children.push(new Paragraph({
+                        alignment: AlignmentType.RIGHT,
+                        indent: { right: 640 },
+                        spacing: { line: 600, lineRule: "exact" },
+                        children: [new TextRun({ text: data.orgName, font: "FangSong_GB2312", size: 32 })]
+                    }));
+                }
+                if (data.date) {
+                    children.push(new Paragraph({
+                        alignment: AlignmentType.RIGHT,
+                        indent: { right: 640 },
+                        spacing: { line: 600, lineRule: "exact" },
+                        children: [new TextRun({ text: formatDateChinese(data.date), font: "FangSong_GB2312", size: 32 })]
+                    }));
+                }
+
+                // 4.10 页码
+                const footer = new Footer({
+                    children: [
+                        new Paragraph({
+                            alignment: AlignmentType.CENTER,
+                            children: [
+                                new TextRun({ text: "— ", font: "SimSun", size: 28 }),
+                                PageNumber.CURRENT,
+                                new TextRun({ text: " —", font: "SimSun", size: 28 }),
+                            ],
+                        }),
+                    ],
+                });
+
+                const doc = new Document({
+                    styles: { default: { document: { run: { font: "FangSong_GB2312", size: 32 } } } },
+                    sections: [{ properties: { page: { margin: margins } }, footers: { default: footer }, children: children }]
+                });
+
+                Packer.toBlob(doc).then(blob => {
+                    saveAs(blob, `${data.title || '公文'}.docx`);
+                    showToast("导出成功");
+                }).catch(err => showToast("导出失败: " + err.message));
+            } catch(e) {
+                showToast("导出出错: " + e.message);
+                console.error(e);
+            }
+        }
+
+        // --- 辅助 ---
+        function createPage() {
+            const d = document.createElement('div');
+            d.className = 'a4-page';
+            
+            let watermarkHtml = '<div class="watermark-layer">';
+            for(let i=0; i<15; i++) {
+                watermarkHtml += '<div class="watermark-item">sqyc_nxc</div>';
+            }
+            watermarkHtml += '</div>';
+
+            d.innerHTML = watermarkHtml + `<div class="page-inner-container"></div><div class="absolute bottom-10 w-full text-center text-sm font-song page-number-slot left-0 z-30"></div>`;
+            return d;
+        }
+
+        function el(tag, cls, text) {
+            const e = document.createElement(tag);
+            if(cls) e.className = cls;
+            if(text) e.innerText = text;
+            return e;
+        }
+        function formatDateChinese(s) {
+            if(!s) return "";
+            const d = new Date(s);
+            return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if(!t) return;
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('translate-x-full');
+            setTimeout(()=>t.classList.add('translate-x-full'), 3000);
+        }
+
+        // --- 递归获取文本并保留换行 ---
+        function getTextWithNewlines(elem) {
+            let text = "";
+            elem.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    text += node.textContent;
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    text += getTextWithNewlines(node);
+                    if (['P','DIV','LI','BR','H1','H2','H3','H4'].includes(node.tagName)) {
+                        text += "\n";
+                    }
+                }
+            });
+            return text;
+        }
+
+        // --- Word 导入 ---
+        function handleFileUpload(e) {
+            const f = e.target.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            
+            showToast("正在解析文档...");
+            
+            r.onload = (ev) => {
+                try {
+                    mammoth.convertToHtml({arrayBuffer: ev.target.result})
+                        .then(result => {
+                            const html = result.value;
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+
+                            // 修复有序列表：手动注入编号
+                            doc.querySelectorAll('ol').forEach(ol => {
+                                let idx = 1;
+                                Array.from(ol.children).forEach(child => {
+                                    if(child.tagName === 'LI') {
+                                        child.prepend(document.createTextNode(`${idx}. `));
+                                        idx++;
+                                    }
+                                });
+                            });
+
+                            // 提取文本（带换行）
+                            let txt = getTextWithNewlines(doc.body);
+
+                            // 填充
+                            const lines = txt.split('\n').map(x=>x.trim()).filter(x=>x);
+                            let body = [];
+                            lines.forEach(l => {
+                                if (!document.getElementById('title').value && l.length<40 && !l.includes(':')) {
+                                    document.getElementById('title').value = l;
+                                } else {
+                                    body.push(l);
+                                }
+                            });
+                            document.getElementById('content').value = body.join('\n\n');
+                            updatePreview();
+                            showToast("Word 导入成功");
+                        })
+                        .catch(err => showToast("解析失败: " + err.message));
+                } catch(e) {
+                    showToast("导入出错: " + e.message);
+                }
+            };
+            r.readAsArrayBuffer(f);
+        }
+    </script>
+  </body>
+</html>
