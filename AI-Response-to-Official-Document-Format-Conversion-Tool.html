@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI回答转公文格式工具</title>
+    <title>自动转换公文格式工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
@@ -107,7 +107,7 @@
         <div class="flex items-center space-x-3">
           <i class="fa fa-file-text text-xl"></i>
           <div>
-            <h1 class="text-lg font-bold tracking-wide">AI回答转公文格式工具</h1>
+            <h1 class="text-lg font-bold tracking-wide">自动公文格式排版工具</h1>
           </div>
         </div>
         <div class="flex items-center space-x-3 text-sm">
@@ -164,7 +164,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-700">标题 <span class="text-red-500">*</span></label>
-                    <textarea id="title" rows="2" class="w-full text-sm border p-1 rounded font-bold" placeholder="请输入公文标题..."></textarea>
+                    <textarea id="title" rows="2" class="w-full text-sm border p-1 rounded" placeholder="请输入公文标题..."></textarea>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-700">主送机关</label>
@@ -203,7 +203,7 @@
                     <label class="text-xs text-gray-500">抄送机关</label>
                     <textarea id="copyTo" rows="2" class="w-full text-sm border p-1 rounded" placeholder="如：市委各部门，市人大常委会办公厅"></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-2 mb-2">
                     <div>
                         <label class="text-xs text-gray-500">印发机关</label>
                         <input type="text" id="printOrg" class="w-full text-sm border p-1 rounded" placeholder="如：市政府办公厅">
@@ -212,6 +212,10 @@
                         <label class="text-xs text-gray-500">印发日期</label>
                         <input type="date" id="printDate" class="w-full text-sm border p-1 rounded">
                     </div>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="enablePageNumber" class="mr-2" checked>
+                    <label class="text-xs text-gray-500">启用公文格式页码</label>
                 </div>
             </div>
         </div>
@@ -230,7 +234,7 @@
       </div>
     </main>
 
-    <div id="toast" class="fixed top-20 right-5 transform translate-x-full transition-transform duration-300 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50 text-sm">
+    <div id="toast" class="fixed top-20 right-5 transform translate-x-full transition-transform duration-300 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50 text-sm opacity-0">
         <span id="toastMsg">操作成功</span>
     </div>
 
@@ -309,6 +313,7 @@
                 copyTo: document.getElementById('copyTo').value,
                 printOrg: document.getElementById('printOrg').value,
                 printDate: document.getElementById('printDate').value,
+                enablePageNumber: document.getElementById('enablePageNumber')?.checked ?? true,
             };
         }
 
@@ -335,23 +340,41 @@
                     }
                 };
 
-                // 版头
+                // 判断是否有版头信息（份号、密级、发文字号、签发人任一项）
+                const hasVersionHeader = !!(data.docNumber || data.confidentiality || data.docCode || data.signer);
+                
+                // 版头（去掉密级的加粗）
                 if (data.docNumber || data.confidentiality) {
                     const div = el('div', 'flex justify-between mb-2 font-heiti text-base');
-                    div.innerHTML = `<span class="pl-2">${data.docNumber ? '份号：'+data.docNumber : ''}</span><span class="font-bold tracking-widest mr-4">${data.confidentiality}</span>`;
+                    div.innerHTML = `<span class="pl-2">${data.docNumber ? '份号：'+data.docNumber : ''}</span><span class="tracking-widest mr-4">${data.confidentiality}</span>`;
                     append(div);
                 }
 
+                // 红头：居中分散对齐，字符间距
+                // 无版头 = 红头便签 = 30号字 (text-4xl)
+                // 有版头 = 正式文件 = 48号字 (text-6xl)
                 if (data.redHeader) {
-                    const h1 = el('h1', 'text-center mb-6 mt-6 text-red-600 font-song font-bold text-5xl tracking-widest leading-none', data.redHeader);
-                    append(h1);
+                    const fontSize = hasVersionHeader ? 'text-6xl' : 'text-4xl';
+                    const wrapper = el('div', 'flex justify-center');
+                    wrapper.style.marginBottom = '0.5rem';
+                    wrapper.style.marginTop = '1.5rem';
+                    
+                    const h1 = el('div', `text-red-600 font-biaosong ${fontSize} leading-none`);
+                    h1.innerText = data.redHeader;
+                    h1.style.letterSpacing = '0.5em';
+                    h1.style.textAlign = 'justify';
+                    h1.style.textAlignLast = 'justify';  // 分散对齐
+                    h1.style.textJustify = 'inter-character';  // 字符间分散
+                    h1.style.width = '90%';  // 增加宽度让文字更分散
+                    
+                    wrapper.appendChild(h1);
+                    append(wrapper);
                 } else {
                     append(el('div', 'h-8')); 
                 }
 
                 const lineWrap = el('div', 'relative mb-10');
                 const hasHeaderContent = data.redHeader || data.docCode || data.signer;
-                const borderClass = hasHeaderContent ? 'border-t border-red-600' : '';
                 
                 let html = '';
                 if (data.signer) {
@@ -359,15 +382,29 @@
                             <span class="font-fangsong text-base">${data.docCode}</span>
                             <div class="flex items-center space-x-4"><span class="font-fangsong text-base">签发人：</span><span class="font-kaiti text-base">${data.signer}</span></div>
                             </div>`;
-                } else {
+                } else if (data.docCode) {
                     html = `<div class="text-center pb-1"><span class="font-fangsong text-base">${data.docCode}</span></div>`;
                 }
-                html += `<div class="${borderClass} absolute bottom-[-1px] left-0 w-full"></div>`;
+                
+                // 根据是否有版头决定红线样式
+                if (hasHeaderContent) {
+                    if (hasVersionHeader) {
+                        // 有版头 = 单红线
+                        html += `<div class="border-t-2 border-solid border-red-600 absolute bottom-[-1px] left-0 w-full"></div>`;
+                    } else {
+                        // 无版头 = 紧密双红线（使用两个div实现）
+                        html += `<div class="absolute bottom-[-1px] left-0 w-full">
+                                    <div class="border-t-2 border-solid border-red-600 mb-0.5"></div>
+                                    <div class="border-t-2 border-solid border-red-600"></div>
+                                 </div>`;
+                    }
+                }
+                
                 lineWrap.innerHTML = html;
                 append(lineWrap);
 
-                // 标题
-                const titleEl = el('div', 'font-biaosong text-3xl text-center mb-6 leading-normal font-bold px-4', data.title);
+                // 标题（去掉加粗）
+                const titleEl = el('div', 'font-biaosong text-3xl text-center mb-6 leading-normal px-4', data.title);
                 titleEl.style.lineHeight = "35pt";
                 append(titleEl);
 
@@ -390,9 +427,9 @@
                         if (/^[一二三四五六七八九十]+、/.test(processedLine)) {
                             className = "font-heiti text-xl mb-0"; 
                         } else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) {
-                            className = "font-kaiti text-xl mb-0 font-bold";
+                            className = "font-kaiti text-xl mb-0";
                         } else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) {
-                            className = "font-fangsong text-xl mb-0 font-bold";
+                            className = "font-fangsong text-xl mb-0";
                         }
 
                         const p = el('p', className, '');
@@ -459,14 +496,16 @@
                     }
                 }
 
-                // 页码
-                const pages = wrapper.querySelectorAll('.a4-page');
-                pages.forEach((p, i) => {
-                    if (i > 0) { 
-                        const slot = p.querySelector('.page-number-slot');
-                        if(slot) slot.innerText = `— ${i + 1} —`;
-                    }
-                });
+                // 页码（根据选项显示）
+                if (data.enablePageNumber) {
+                    const pages = wrapper.querySelectorAll('.a4-page');
+                    pages.forEach((p, i) => {
+                        if (i > 0) { 
+                            const slot = p.querySelector('.page-number-slot');
+                            if(slot) slot.innerText = `— ${i + 1} —`;
+                        }
+                    });
+                }
             } catch (e) {
                 console.error("Preview error:", e);
             }
@@ -484,23 +523,36 @@
                 const margins = { top: 2097, bottom: 1984, left: 1587, right: 1474 }; 
                 const children = [];
 
+                // 判断是否有版头信息
+                const hasVersionHeader = !!(data.docNumber || data.confidentiality || data.docCode || data.signer);
+
                 // 4.1 版头
                 if (data.docNumber || data.confidentiality) {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({ text: data.docNumber?`份号：${data.docNumber}`:'', font: "SimHei", size: 32 }),
                             new TextRun({ text: "\t\t\t\t\t" }),
-                            new TextRun({ text: data.confidentiality, font: "SimHei", size: 32, bold: true })
+                            new TextRun({ text: data.confidentiality, font: "SimHei", size: 32 })
                         ]
                     }));
                 }
 
-                // 4.2 红头
+                // 4.2 红头（分散对齐）
+                // 无版头 = 红头便签 = 30号字 (size: 60)
+                // 有版头 = 正式文件 = 48号字 (size: 96)
                 if (data.redHeader) {
+                    const redHeaderSize = hasVersionHeader ? 96 : 60;
                     children.push(new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 },
-                        children: [ new TextRun({ text: data.redHeader, font: "SimSun", size: 116, color: "FF0000", bold: true }) ]
+                        alignment: AlignmentType.DISTRIBUTE,  // 分散对齐
+                        spacing: { before: 200, after: 200 },
+                        children: [ new TextRun({ 
+                            text: data.redHeader,
+                            font: "FZXiaoBiaoSong-B05S", 
+                            size: redHeaderSize, 
+                            color: "FF0000",
+                            scale: 90,  // 缩放90%
+                            spacing: 20  // 字间距1磅 = 20 twips
+                        }) ]
                     }));
                 } else {
                     children.push(new Paragraph(""));
@@ -533,19 +585,96 @@
                         ],
                     });
                     children.push(headerTable);
-                } else {
+                } else if (data.docCode) {
                     children.push(new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        spacing: { before: 0, after: 0 },
                         children: [new TextRun({ text: data.docCode, font: "FangSong_GB2312", size: 32 })]
                     }));
                 }
 
-                // 4.4 红线
+                // 4.4 红线（使用表格边框 + 段落边框实现双红线）
                 if (data.redHeader || data.docCode || data.signer) {
-                    children.push(new Paragraph({
-                        border: { bottom: { color: "FF0000", space: 1, value: "single", size: 6 } },
-                        spacing: { after: 300 }
-                    }));
+                    const redBorder = { style: BorderStyle.SINGLE, size: 20, color: "FF0000" };
+                    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+                    
+                    if (hasVersionHeader) {
+                        // 有版头 = 单红线（使用段落下边框）
+                        const singleLine = new Paragraph({
+                            text: " ",
+                            border: {
+                                bottom: {
+                                    color: "FF0000",
+                                    space: 0,
+                                    style: BorderStyle.SINGLE,
+                                    size: 15
+                                }
+                            },
+                            spacing: { before: 0, after: 300, line: 1 }
+                        });
+                        children.push(singleLine);
+                    } else {
+                        // 无版头 = 紧密双红线（方案3：表格边框 + 空段落下边框）
+                        // 统一线条粗细为 size: 18
+                        const unifiedRedBorder = { style: BorderStyle.SINGLE, size: 18, color: "FF0000" };
+                        
+                        // 第一条红线（表格边框）
+                        const line1 = new Table({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            margins: {
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                            },
+                            borders: {
+                                top: noBorder,
+                                bottom: unifiedRedBorder,
+                                left: noBorder,
+                                right: noBorder,
+                                insideHorizontal: noBorder,
+                                insideVertical: noBorder,
+                            },
+                            rows: [
+                                new TableRow({
+                                    height: { value: 1, rule: "exact" },
+                                    children: [
+                                        new TableCell({
+                                            children: [new Paragraph({ spacing: { before: 0, after: 0, line: 1 } })],
+                                            borders: {
+                                                top: noBorder,
+                                                bottom: unifiedRedBorder,
+                                                left: noBorder,
+                                                right: noBorder,
+                                            },
+                                            margins: {
+                                                top: 0,
+                                                bottom: 0,
+                                                left: 0,
+                                                right: 0,
+                                            },
+                                        }),
+                                    ],
+                                }),
+                            ],
+                        });
+                        children.push(line1);
+                        
+                        // 第二条红线（空段落 + 下边框，增加间距）
+                        const line2 = new Paragraph({
+                            text: " ",
+                            border: {
+                                bottom: {
+                                    color: "FF0000",
+                                    space: 0,
+                                    style: BorderStyle.SINGLE,
+                                    size: 18
+                                }
+                            },
+                            spacing: { before: 0, after: 300, line: 20 }
+                        });
+                        children.push(line2);
+                    }
                 }
                 children.push(new Paragraph(""));
 
@@ -553,7 +682,7 @@
                 children.push(new Paragraph({
                     alignment: AlignmentType.CENTER,
                     spacing: { line: 700, lineRule: "exact", after: 400 },
-                    children: [ new TextRun({ text: data.title, font: "FZXiaoBiaoSong-B05S", size: 44, bold: true }) ]
+                    children: [ new TextRun({ text: data.title, font: "FZXiaoBiaoSong-B05S", size: 44 }) ]
                 }));
 
                 // 4.6 主送
@@ -576,8 +705,8 @@
                         let bold = false;
                         
                         if (/^[一二三四五六七八九十]+、/.test(processedLine)) { font = "SimHei"; }
-                        else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) { font = "KaiTi_GB2312"; bold = true; }
-                        else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) { bold = true; }
+                        else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) { font = "KaiTi_GB2312"; }
+                        else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) { /* 保持仿宋 */ }
                         
                         const parts = processedLine.split(/(\*\*.*?\*\*)/g);
                         const runChildren = parts.map(part => {
@@ -585,15 +714,13 @@
                                 return new TextRun({
                                     text: part.slice(2, -2),
                                     font: font,
-                                    size: 32,
-                                    bold: true
+                                    size: 32
                                 });
                             } else {
                                 return new TextRun({
                                     text: part,
                                     font: font,
-                                    size: 32,
-                                    bold: bold
+                                    size: 32
                                 });
                             }
                         });
@@ -601,6 +728,7 @@
                         children.push(new Paragraph({
                             indent: { firstLine: 640 },
                             spacing: { line: 600, lineRule: "exact" },
+                            alignment: AlignmentType.JUSTIFIED,
                             children: runChildren
                         }));
                     });
@@ -638,23 +766,41 @@
                     }));
                 }
 
-                // 4.10 页码
-                const footer = new Footer({
-                    children: [
-                        new Paragraph({
-                            alignment: AlignmentType.CENTER,
-                            children: [
-                                new TextRun({ text: "— ", font: "SimSun", size: 28 }),
-                                PageNumber.CURRENT,
-                                new TextRun({ text: " —", font: "SimSun", size: 28 }),
-                            ],
-                        }),
-                    ],
-                });
+                // 4.10 页码（可选，从第2页开始）
+                let sectionConfig = { 
+                    properties: { 
+                        page: { 
+                            margin: margins,
+                            pageNumbers: {
+                                start: 1,
+                                formatType: "decimal"
+                            }
+                        } 
+                    }, 
+                    children: children 
+                };
+                
+                if (data.enablePageNumber) {
+                    const footer = new Footer({
+                        children: [
+                            new Paragraph({
+                                alignment: AlignmentType.CENTER,
+                                children: [
+                                    new TextRun("— "),
+                                    new TextRun({
+                                        children: [PageNumber.CURRENT]
+                                    }),
+                                    new TextRun(" —"),
+                                ],
+                            }),
+                        ],
+                    });
+                    sectionConfig.footers = { default: footer };
+                }
 
                 const doc = new Document({
                     styles: { default: { document: { run: { font: "FangSong_GB2312", size: 32 } } } },
-                    sections: [{ properties: { page: { margin: margins } }, footers: { default: footer }, children: children }]
+                    sections: [sectionConfig]
                 });
 
                 Packer.toBlob(doc).then(blob => {
@@ -697,8 +843,10 @@
             const t = document.getElementById('toast');
             if(!t) return;
             document.getElementById('toastMsg').innerText = msg;
-            t.classList.remove('translate-x-full');
-            setTimeout(()=>t.classList.add('translate-x-full'), 3000);
+            t.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(()=>{
+                t.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
         }
 
         // --- 递归获取文本并保留换行 ---
