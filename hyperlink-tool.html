@@ -92,7 +92,7 @@
     <!-- 头部 -->
     <header class="bg-primary text-white py-6 shadow-md relative z-10">
       <div class="container mx-auto px-4 md:px-6 relative">
-        <!-- 返回工具箱首页链接（绝对定位右侧） -->
+        <!-- 返回工具箱首页链接 -->
         <a
           href="index.html"
           class="absolute top-1/2 right-4 md:right-6 -translate-y-1/2 text-white/90 hover:text-white transition-all duration-300 flex items-center text-sm md:text-base bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
@@ -100,7 +100,7 @@
           <i class="fa fa-home mr-1"></i> 返回工具箱首页
         </a>
 
-        <!-- 标题区域（保持居中） -->
+        <!-- 标题区域 -->
         <div class="text-center">
           <h1 class="text-[clamp(1.5rem,3vw,2.2rem)] font-bold text-shadow flex items-center justify-center">
             <img src="favicon.png" alt="Logo" class="w-10 h-10 md:w-12 md:h-12 mr-3 rounded-full shadow-lg" />
@@ -151,7 +151,7 @@
           </ol>
         </div>
 
-        <!-- 上传文件夹区域（跨平台优化：仅生成相对路径）- 保留 -->
+        <!-- 上传文件夹区域 -->
         <div
           class="mb-8 border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-all-300"
         >
@@ -176,7 +176,7 @@
             </div>
           </label>
 
-          <!-- 上传文件列表预览（仅显示相对路径） -->
+          <!-- 上传文件列表预览 -->
           <div id="fileListPreview" class="mt-6 hidden">
             <div
               class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2"
@@ -211,12 +211,12 @@
               id="fileList"
               class="max-h-40 overflow-y-auto bg-gray-50 rounded-lg p-2"
             >
-              <!-- 文件列表将动态生成（仅显示相对路径） -->
+              <!-- 文件列表将动态生成 -->
             </div>
           </div>
         </div>
 
-        <!-- 输入区域（跨平台优化：双系统示例，保留相对和绝对路径手动输入） -->
+        <!-- 输入区域 -->
         <div class="mb-8">
           <label for="urlInput" class="block text-dark font-medium mb-2">
             <i class="fa fa-keyboard-o mr-1"></i
@@ -255,7 +255,7 @@ https://www.baidu.com
           <div id="pathCheckResult" class="mt-2 text-xs hidden"></div>
         </div>
 
-        <!-- 显示文本设置（保留） -->
+        <!-- 显示文本设置 -->
         <div class="mb-8">
           <label for="linkText" class="block text-dark font-medium mb-2">
             <i class="fa fa-font mr-1"></i
@@ -273,7 +273,7 @@ https://www.baidu.com
           </div>
         </div>
 
-        <!-- 操作按钮（增加清理无效行按钮） -->
+        <!-- 操作按钮 -->
         <div class="flex flex-col sm:flex-row gap-4 mb-8">
           <button
             id="convertBtn"
@@ -302,7 +302,7 @@ https://www.baidu.com
           </button>
         </div>
 
-        <!-- 预览区域（跨平台优化：显示系统+路径类型标记） -->
+        <!-- 预览区域 -->
         <div class="mb-6">
           <h3 class="text-dark font-medium mb-3 flex items-center">
             <i class="fa fa-eye mr-2 text-primary"></i
@@ -319,7 +319,7 @@ https://www.baidu.com
           </div>
         </div>
 
-        <!-- 公式区域（跨平台优化：显示当前系统） -->
+        <!-- 公式区域 -->
         <div>
           <h3 class="text-dark font-medium mb-3 flex items-center">
             <i class="fa fa-code mr-2 text-primary"></i
@@ -347,31 +347,6 @@ https://www.baidu.com
         <div class="mt-6 text-right text-sm text-gray-500">
           <p>短号：65048<br />邮箱：1415055998@qq.com</p>
         </div>
-        <!-- 友情链接 -->
-        <!-- <div class="mt-8 pt-6 border-t border-gray-200">
-          <h3 class="text-dark font-medium mb-3">友情链接</h3>
-          <div class="flex flex-wrap gap-4">
-            <a
-              href="summary-tool.html"
-              class="flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <i class="fa fa-calculator mr-2"></i>品规数量分类汇总工具
-            </a>
-            <a
-              href="https://github.com/niuxiangchen/Simple-classification-and-summary"
-              target="_blank"
-              class="flex items-center text-gray-600 hover:text-gray-800"
-            >
-              <i class="fa fa-github mr-2"></i>分类汇总工具源码
-            </a>
-            <a
-              href="index.html"
-              class="flex items-center text-green-600 hover:text-green-800"
-            >
-              <i class="fa fa-home mr-2"></i>返回工具箱首页
-            </a>
-          </div>
-        </div> -->
       </div>
     </main>
 
@@ -398,16 +373,16 @@ https://www.baidu.com
       <span id="toastText"></span>
     </div>
 
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <script>
-      // DOM元素
-      const folderInput = document.getElementById("folderInput");
       const fileListPreview = document.getElementById("fileListPreview");
       const fileList = document.getElementById("fileList");
       const fileCount = document.getElementById("fileCount");
       const clearFileListBtn = document.getElementById("clearFileListBtn");
       const urlInput = document.getElementById("urlInput");
       const linkText = document.getElementById("linkText");
-      const cleanInvalidBtn = document.getElementById("cleanInvalidBtn"); // 新增清理按钮
+      const cleanInvalidBtn = document.getElementById("cleanInvalidBtn");
       const convertBtn = document.getElementById("convertBtn");
       const copyBtn = document.getElementById("copyBtn");
       const clearBtn = document.getElementById("clearBtn");
@@ -427,12 +402,12 @@ https://www.baidu.com
       );
 
       // 核心跨平台变量
-      let isWindows = true; // 默认Windows，将自动识别
-      let filePaths = []; // 格式：[{fileName: 文件名, windowsRelative: Windows相对路径, macRelative: macOS相对路径, isExcel: 是否为Excel文件}]
-      let baseDirectory = ""; // 基准目录（用于相对路径计算）
-      let hasExcelFile = false; // 是否检测到Excel文件
+      let isWindows = true;
+      let filePaths = [];
+      let baseDirectory = "";
+      let hasExcelFile = false;
 
-      // 第一步：自动识别操作系统（核心跨平台功能）
+      // 第一步：自动识别操作系统
       function detectOS() {
         const userAgent = navigator.userAgent.toLowerCase();
         if (userAgent.includes("mac os")) {
@@ -456,7 +431,7 @@ https://www.baidu.com
         }
       }
 
-      // 显示提示（保留）
+      // 显示提示
       function showToast(message, type = "success") {
         toastText.textContent = message;
 
@@ -484,7 +459,7 @@ https://www.baidu.com
         }, 3000);
       }
 
-      // 根据文件扩展名获取图标（保留）
+      // 根据文件扩展名获取图标
       function getFileIcon(fileName) {
         const ext = fileName.split(".").pop().toLowerCase();
         switch (ext) {
@@ -510,26 +485,22 @@ https://www.baidu.com
         }
       }
 
-      // 跨平台路径处理工具函数（保留所有路径校验功能）
+      // 跨平台路径处理工具函数
       const PathUtils = {
-        // 检查路径是否包含无效字符（双系统通用）
         hasInvalidCharsOrSpace: function (path) {
           const invalidChars =
             /[！@#￥%……&*（）——+={}【】｜、；：""''《》，。？、`~￥　]/;
           return invalidChars.test(path) || /\s/.test(path);
         },
 
-        // 检查Windows路径分隔符是否合法（仅允许\）
         isWindowsSeparatorValid: function (path) {
           return !/\/|\\u3001|\\uff0c/.test(path);
         },
 
-        // 检查macOS路径分隔符是否合法（仅允许/）
         isMacSeparatorValid: function (path) {
           return !/\\|\\u3001|\\uff0c/.test(path);
         },
 
-        // Windows相对路径格式校验
         isInvalidWindowsRelative: function (path) {
           const validFormat = /^(\.\.\\|[\w\u4e00-\u9fa5])/;
           return (
@@ -539,7 +510,6 @@ https://www.baidu.com
           );
         },
 
-        // Windows绝对路径格式校验
         isInvalidWindowsAbsolute: function (path) {
           const validFormat = /^[A-Za-z]:\\/;
           return (
@@ -549,7 +519,6 @@ https://www.baidu.com
           );
         },
 
-        // macOS相对路径格式校验
         isInvalidMacRelative: function (path) {
           const validFormat = /^(\.\.\/|[\w\u4e00-\u9fa5])/;
           return (
@@ -559,9 +528,8 @@ https://www.baidu.com
           );
         },
 
-        // macOS绝对路径格式校验
         isInvalidMacAbsolute: function (path) {
-          const validFormat = /^(\/|~\/)/; // 支持/开头或~/用户目录开头
+          const validFormat = /^(\/|~\/)/;
           return (
             !validFormat.test(path) ||
             !this.isMacSeparatorValid(path) ||
@@ -569,12 +537,10 @@ https://www.baidu.com
           );
         },
 
-        // 检查是否为合法网址（双系统通用）
         isValidUrl: function (path) {
           return /^(https?:\/\/|ftp:\/\/|mailto:|tel:)/i.test(path);
         },
 
-        // 根据系统转换路径分隔符
         convertSeparator: function (path, toWindows = true) {
           if (toWindows) {
             return path.replace(/\//g, "\\").replace(/\\\\+/g, "\\");
@@ -583,7 +549,6 @@ https://www.baidu.com
           }
         },
 
-        // 生成macOS用户目录路径（~/替换为绝对路径）
         expandMacUserDir: function (path) {
           if (path.startsWith("~/")) {
             return path.replace("~", "/Users/" + this.getMacUserName());
@@ -591,13 +556,10 @@ https://www.baidu.com
           return path;
         },
 
-        // 获取macOS用户名（简化版，实际通过路径解析）
         getMacUserName: function () {
-          // 浏览器安全限制无法直接获取，这里返回占位符
           return "用户名";
         },
 
-        // 判断路径类型（相对/绝对）- 新增函数
         getPathType: function (path, isWindows) {
           if (this.isValidUrl(path)) return "url";
           if (isWindows) {
@@ -607,7 +569,6 @@ https://www.baidu.com
           }
         },
 
-        // 检查路径是否符合当前系统规则
         isPathValidForCurrentSystem: function (path, isWindows) {
           if (this.isValidUrl(path)) return true;
 
@@ -629,7 +590,7 @@ https://www.baidu.com
         },
       };
 
-      // 更新文件列表显示（仅显示相对路径）
+      // 更新文件列表显示
       function updateFileListDisplay() {
         if (filePaths.length === 0) return;
 
@@ -638,7 +599,6 @@ https://www.baidu.com
           const { fileName, windowsRelative, macRelative, isExcel } = item;
           let displayPath = "";
 
-          // 根据系统选择相对路径
           if (isWindows) {
             displayPath = windowsRelative;
           } else {
@@ -674,7 +634,7 @@ https://www.baidu.com
         });
       }
 
-      // 更新输入框中的路径（仅填充相对路径）
+      // 更新输入框中的路径
       function updateInputPaths() {
         if (filePaths.length === 0) return;
 
@@ -691,7 +651,7 @@ https://www.baidu.com
         urlInput.value = paths.join("\n");
       }
 
-      // 处理文件夹上传（仅生成相对路径）
+      // 处理文件夹上传
       folderInput.addEventListener("change", (e) => {
         const files = e.target.files;
         if (!files.length) return;
@@ -701,13 +661,11 @@ https://www.baidu.com
         let invalidFiles = 0;
         hasExcelFile = false;
 
-        // 获取基准目录（用于相对路径计算）
         if (files[0].webkitRelativePath) {
           const fullPathParts = files[0].webkitRelativePath.split("/");
           baseDirectory = fullPathParts[0] || "根目录";
         }
 
-        // 遍历所有文件，仅生成双系统的相对路径
         Array.from(files).forEach((file) => {
           const fileName = file.name;
           const isExcel =
@@ -718,13 +676,11 @@ https://www.baidu.com
             hasExcelFile = true;
           }
 
-          // 1. 检查文件名是否含无效字符（双系统都不允许）
           if (PathUtils.hasInvalidCharsOrSpace(fileName)) {
             invalidFiles++;
             return;
           }
 
-          // 2. 原始相对路径（浏览器返回的是/分隔）
           const originalRelative = file.webkitRelativePath;
           const relativeWithoutBase = originalRelative.startsWith(
             baseDirectory + "/"
@@ -732,19 +688,16 @@ https://www.baidu.com
             ? originalRelative.replace(baseDirectory + "/", "")
             : originalRelative;
 
-          // 3. 生成Windows相对路径
           const windowsRelative = PathUtils.convertSeparator(
             relativeWithoutBase,
             true
           );
 
-          // 4. 生成macOS相对路径
           const macRelative = PathUtils.convertSeparator(
             relativeWithoutBase,
             false
           );
 
-          // 5. 存储相对路径数据
           filePaths.push({
             fileName: fileName,
             windowsRelative: windowsRelative,
@@ -753,13 +706,11 @@ https://www.baidu.com
           });
         });
 
-        // 更新文件列表和输入框
         updateFileListDisplay();
         updateInputPaths();
         fileCount.textContent = filePaths.length;
         fileListPreview.classList.remove("hidden");
 
-        // 显示Excel检测结果
         if (hasExcelFile) {
           excelDetectHint.classList.remove("hidden");
           if (isWindows) {
@@ -773,7 +724,6 @@ https://www.baidu.com
           excelDetectHint.classList.add("hidden");
         }
 
-        // 提示信息（跨平台适配）
         if (invalidFiles > 0) {
           showToast(
             `成功识别 ${filePaths.length} 个文件，跳过 ${invalidFiles} 个含空格/特殊字符的文件`,
@@ -793,11 +743,10 @@ https://www.baidu.com
           }
         }
 
-        // 清空文件输入框（允许重新上传）
         folderInput.value = "";
       });
 
-      // 清空文件列表（保留，优化跨平台提示）
+      // 清空文件列表
       clearFileListBtn.addEventListener("click", () => {
         filePaths = [];
         baseDirectory = "";
@@ -843,12 +792,11 @@ https://www.baidu.com
         }
       });
 
-      // 格式化地址为Excel可用公式（支持相对和绝对路径）
+      // 格式化地址为Excel可用公式
       function formatAddressForExcelFormula(address) {
         const trimmedAddr = address.trim();
         if (!trimmedAddr) return null;
 
-        // 1. 合法网址
         if (PathUtils.isValidUrl(trimmedAddr)) {
           return {
             type: "url",
@@ -861,14 +809,10 @@ https://www.baidu.com
           };
         }
 
-        // 2. 自动识别路径类型
         const pathType = PathUtils.getPathType(trimmedAddr, isWindows);
 
-        // 3. 根据当前系统和路径类型处理
         if (isWindows) {
-          // Windows系统处理
           if (pathType === "absolute") {
-            // Windows绝对路径
             if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
               return {
                 type: "invalid",
@@ -916,7 +860,6 @@ https://www.baidu.com
               };
             }
           } else {
-            // Windows相对路径
             if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
               return {
                 type: "invalid",
@@ -965,9 +908,7 @@ https://www.baidu.com
             }
           }
         } else {
-          // macOS系统处理
           if (pathType === "absolute") {
-            // macOS绝对路径
             if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
               return {
                 type: "invalid",
@@ -1015,7 +956,6 @@ https://www.baidu.com
               };
             }
           } else {
-            // macOS相对路径
             if (PathUtils.hasInvalidCharsOrSpace(trimmedAddr)) {
               return {
                 type: "invalid",
@@ -1088,11 +1028,9 @@ https://www.baidu.com
           const result = formatAddressForExcelFormula(addr);
           if (!result) return;
 
-          // 确定显示文本
           let displayText =
             customText || result.path.split(isWindows ? "\\" : "/").pop();
 
-          // 处理公式
           if (result.valid) {
             validCount++;
             let formula;
@@ -1123,14 +1061,11 @@ https://www.baidu.com
           }
         });
 
-        // 更新预览和公式区域
         codeArea.textContent = formulas.join("\n");
         previewArea.innerHTML = previewHtml.join("");
 
-        // 启用复制按钮
         copyBtn.disabled = formulas.length === 0;
 
-        // 显示结果统计
         if (invalidCount > 0) {
           showToast(
             `已生成 ${validCount} 个有效公式，发现 ${invalidCount} 个无效路径`,
@@ -1155,7 +1090,6 @@ https://www.baidu.com
             showToast("公式已复制到剪贴板，可直接粘贴到Excel中", "success");
           })
           .catch(() => {
-            // 备用复制方法
             const textarea = document.createElement("textarea");
             textarea.value = textToCopy;
             document.body.appendChild(textarea);
@@ -1185,5 +1119,8 @@ https://www.baidu.com
       // 页面加载时自动识别系统
       window.addEventListener("load", detectOS);
     </script>
+
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
   </body>
 </html>
