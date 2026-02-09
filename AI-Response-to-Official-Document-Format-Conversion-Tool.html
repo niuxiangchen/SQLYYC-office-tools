@@ -239,8 +239,9 @@
         <span id="toastMsg">操作成功</span>
     </div>
 
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <script>
-        // --- 1. 初始化 ---
         const els = {
             form: document.querySelectorAll('#formContainer input, #formContainer textarea, #formContainer select'),
             pagesWrapper: document.getElementById('pagesWrapper'),
@@ -248,8 +249,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            // 日期默认为空，不设置 value
-            
             // 绑定事件
             const importBtn = document.getElementById('importBtn');
             if(importBtn) importBtn.addEventListener('click', () => els.fileInput.click());
@@ -344,32 +343,30 @@
                 // 判断是否有版头信息（份号、密级、发文字号、签发人任一项）
                 const hasVersionHeader = !!(data.docNumber || data.confidentiality || data.docCode || data.signer);
                 
-                // 版头（去掉密级的加粗）
+                // 版头
                 if (data.docNumber || data.confidentiality) {
                     const div = el('div', 'flex justify-between mb-2 font-heiti text-base');
                     div.innerHTML = `<span class="pl-2">${data.docNumber ? '份号：'+data.docNumber : ''}</span><span class="tracking-widest mr-4">${data.confidentiality}</span>`;
                     append(div);
                 }
 
-                // 红头：居中分散对齐，字符间距
-                // 无版头 = 红头便签 = 30号字 (text-4xl)
-                // 有版头 = 正式文件 = 48号字 (text-6xl)
+                // 红头
                 if (data.redHeader) {
                     const fontSize = hasVersionHeader ? 'text-6xl' : 'text-4xl';
-                    const wrapper = el('div', 'flex justify-center');
-                    wrapper.style.marginBottom = '0.5rem';
-                    wrapper.style.marginTop = '1.5rem';
+                    const wrapperDiv = el('div', 'flex justify-center');
+                    wrapperDiv.style.marginBottom = '0.5rem';
+                    wrapperDiv.style.marginTop = '1.5rem';
                     
                     const h1 = el('div', `text-red-600 font-biaosong ${fontSize} leading-none`);
                     h1.innerText = data.redHeader;
                     h1.style.letterSpacing = '0.5em';
                     h1.style.textAlign = 'justify';
-                    h1.style.textAlignLast = 'justify';  // 分散对齐
-                    h1.style.textJustify = 'inter-character';  // 字符间分散
-                    h1.style.width = '90%';  // 增加宽度让文字更分散
+                    h1.style.textAlignLast = 'justify';
+                    h1.style.textJustify = 'inter-character';
+                    h1.style.width = '90%';
                     
-                    wrapper.appendChild(h1);
-                    append(wrapper);
+                    wrapperDiv.appendChild(h1);
+                    append(wrapperDiv);
                 } else {
                     append(el('div', 'h-8')); 
                 }
@@ -387,13 +384,11 @@
                     html = `<div class="text-center pb-1"><span class="font-fangsong text-base">${data.docCode}</span></div>`;
                 }
                 
-                // 根据是否有版头决定红线样式
+                // 红线
                 if (hasHeaderContent) {
                     if (hasVersionHeader) {
-                        // 有版头 = 单红线
                         html += `<div class="border-t-2 border-solid border-red-600 absolute bottom-[-1px] left-0 w-full"></div>`;
                     } else {
-                        // 无版头 = 紧密双红线（使用两个div实现）
                         html += `<div class="absolute bottom-[-1px] left-0 w-full">
                                     <div class="border-t-2 border-solid border-red-600 mb-0.5"></div>
                                     <div class="border-t-2 border-solid border-red-600"></div>
@@ -404,7 +399,7 @@
                 lineWrap.innerHTML = html;
                 append(lineWrap);
 
-                // 标题（去掉加粗）
+                // 标题
                 const titleEl = el('div', 'font-biaosong text-3xl text-center mb-6 leading-normal px-4', data.title);
                 titleEl.style.lineHeight = "35pt";
                 append(titleEl);
@@ -497,7 +492,7 @@
                     }
                 }
 
-                // 页码（根据选项显示）
+                // 页码
                 if (data.enablePageNumber) {
                     const pages = wrapper.querySelectorAll('.a4-page');
                     pages.forEach((p, i) => {
@@ -538,21 +533,19 @@
                     }));
                 }
 
-                // 4.2 红头（分散对齐）
-                // 无版头 = 红头便签 = 30号字 (size: 60)
-                // 有版头 = 正式文件 = 48号字 (size: 96)
+                // 4.2 红头
                 if (data.redHeader) {
                     const redHeaderSize = hasVersionHeader ? 96 : 60;
                     children.push(new Paragraph({
-                        alignment: AlignmentType.DISTRIBUTE,  // 分散对齐
+                        alignment: AlignmentType.DISTRIBUTE,
                         spacing: { before: 200, after: 200 },
                         children: [ new TextRun({ 
                             text: data.redHeader,
                             font: "FZXiaoBiaoSong-B05S", 
                             size: redHeaderSize, 
                             color: "FF0000",
-                            scale: 90,  // 缩放90%
-                            spacing: 20  // 字间距1磅 = 20 twips
+                            scale: 90,
+                            spacing: 20
                         }) ]
                     }));
                 } else {
@@ -594,47 +587,29 @@
                     }));
                 }
 
-                // 4.4 红线（使用表格边框 + 段落边框实现双红线）
+                // 4.4 红线
                 if (data.redHeader || data.docCode || data.signer) {
                     const redBorder = { style: BorderStyle.SINGLE, size: 20, color: "FF0000" };
                     const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
                     
                     if (hasVersionHeader) {
-                        // 有版头 = 单红线（使用段落下边框）
                         const singleLine = new Paragraph({
                             text: " ",
                             border: {
-                                bottom: {
-                                    color: "FF0000",
-                                    space: 0,
-                                    style: BorderStyle.SINGLE,
-                                    size: 15
-                                }
+                                bottom: { color: "FF0000", space: 0, style: BorderStyle.SINGLE, size: 15 }
                             },
                             spacing: { before: 0, after: 300, line: 1 }
                         });
                         children.push(singleLine);
                     } else {
-                        // 无版头 = 紧密双红线（方案3：表格边框 + 空段落下边框）
-                        // 统一线条粗细为 size: 18
                         const unifiedRedBorder = { style: BorderStyle.SINGLE, size: 18, color: "FF0000" };
                         
-                        // 第一条红线（表格边框）
                         const line1 = new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
-                            margins: {
-                                top: 0,
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                            },
+                            margins: { top: 0, bottom: 0, left: 0, right: 0 },
                             borders: {
-                                top: noBorder,
-                                bottom: unifiedRedBorder,
-                                left: noBorder,
-                                right: noBorder,
-                                insideHorizontal: noBorder,
-                                insideVertical: noBorder,
+                                top: noBorder, bottom: unifiedRedBorder, left: noBorder, right: noBorder,
+                                insideHorizontal: noBorder, insideVertical: noBorder,
                             },
                             rows: [
                                 new TableRow({
@@ -642,18 +617,8 @@
                                     children: [
                                         new TableCell({
                                             children: [new Paragraph({ spacing: { before: 0, after: 0, line: 1 } })],
-                                            borders: {
-                                                top: noBorder,
-                                                bottom: unifiedRedBorder,
-                                                left: noBorder,
-                                                right: noBorder,
-                                            },
-                                            margins: {
-                                                top: 0,
-                                                bottom: 0,
-                                                left: 0,
-                                                right: 0,
-                                            },
+                                            borders: { top: noBorder, bottom: unifiedRedBorder, left: noBorder, right: noBorder },
+                                            margins: { top: 0, bottom: 0, left: 0, right: 0 },
                                         }),
                                     ],
                                 }),
@@ -661,17 +626,9 @@
                         });
                         children.push(line1);
                         
-                        // 第二条红线（空段落 + 下边框，增加间距）
                         const line2 = new Paragraph({
                             text: " ",
-                            border: {
-                                bottom: {
-                                    color: "FF0000",
-                                    space: 0,
-                                    style: BorderStyle.SINGLE,
-                                    size: 18
-                                }
-                            },
+                            border: { bottom: { color: "FF0000", space: 0, style: BorderStyle.SINGLE, size: 18 } },
                             spacing: { before: 0, after: 300, line: 20 }
                         });
                         children.push(line2);
@@ -703,27 +660,16 @@
                         if (!processedLine) return; 
 
                         let font = "FangSong_GB2312";
-                        let bold = false;
                         
                         if (/^[一二三四五六七八九十]+、/.test(processedLine)) { font = "SimHei"; }
                         else if (/^（[一二三四五六七八九十]+）/.test(processedLine)) { font = "KaiTi_GB2312"; }
-                        else if (/^(\d+\.|[0-9]+\.)/.test(processedLine)) { /* 保持仿宋 */ }
                         
                         const parts = processedLine.split(/(\*\*.*?\*\*)/g);
                         const runChildren = parts.map(part => {
                             if (part.startsWith('**') && part.endsWith('**')) {
-                                return new TextRun({
-                                    text: part.slice(2, -2),
-                                    font: font,
-                                    size: 32
-                                });
-                            } else {
-                                return new TextRun({
-                                    text: part,
-                                    font: font,
-                                    size: 32
-                                });
+                                return new TextRun({ text: part.slice(2, -2), font, size: 32 });
                             }
+                            return new TextRun({ text: part, font, size: 32 });
                         });
 
                         children.push(new Paragraph({
@@ -767,15 +713,12 @@
                     }));
                 }
 
-                // 4.10 页码（可选，从第2页开始）
+                // 4.10 页码
                 let sectionConfig = { 
                     properties: { 
                         page: { 
                             margin: margins,
-                            pageNumbers: {
-                                start: 1,
-                                formatType: "decimal"
-                            }
+                            pageNumbers: { start: 1, formatType: "decimal" }
                         } 
                     }, 
                     children: children 
@@ -788,9 +731,7 @@
                                 alignment: AlignmentType.CENTER,
                                 children: [
                                     new TextRun("— "),
-                                    new TextRun({
-                                        children: [PageNumber.CURRENT]
-                                    }),
+                                    new TextRun({ children: [PageNumber.CURRENT] }),
                                     new TextRun(" —"),
                                 ],
                             }),
@@ -835,11 +776,13 @@
             if(text) e.innerText = text;
             return e;
         }
+
         function formatDateChinese(s) {
             if(!s) return "";
             const d = new Date(s);
             return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
         }
+
         function showToast(msg) {
             const t = document.getElementById('toast');
             if(!t) return;
@@ -882,7 +825,7 @@
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
 
-                            // 修复有序列表：手动注入编号
+                            // 修复有序列表
                             doc.querySelectorAll('ol').forEach(ol => {
                                 let idx = 1;
                                 Array.from(ol.children).forEach(child => {
@@ -893,7 +836,7 @@
                                 });
                             });
 
-                            // 提取文本（带换行）
+                            // 提取文本
                             let txt = getTextWithNewlines(doc.body);
 
                             // 填充
@@ -918,5 +861,8 @@
             r.readAsArrayBuffer(f);
         }
     </script>
+
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
   </body>
 </html>

@@ -111,7 +111,7 @@
           >
             输入原始数据
             <span class="text-sm font-normal text-gray-500 ml-2"
-              >（直接粘贴“品规+数量”行）</span
+              >（直接粘贴"品规+数量"行）</span
             >
           </label>
 
@@ -131,7 +131,7 @@
           <div class="mt-2 text-sm text-gray-500 bg-blue-50 p-3 rounded-md">
             <i class="fa fa-lightbulb-o text-primary mr-1"></i>
             提示：1. 每行格式为「品规 数量」（制表符分隔）；2.
-            无需输入表头，直接粘贴纯数据行；3. 中文括号“（）”自动转英文“()”
+            无需输入表头，直接粘贴纯数据行；3. 中文括号"（）"自动转英文"()"
           </div>
         </div>
 
@@ -203,27 +203,6 @@
         </div>
       </div>
 
-      <!-- 友情链接
-    <div class="bg-white rounded-xl p-6 card-shadow">
-      <h3 class="text-gray-800 font-medium mb-4 flex items-center">
-        <i class="fa fa-link text-primary mr-2"></i>友情链接
-      </h3>
-      <div class="flex flex-wrap gap-4">
-        <a href="hyperlink-tool.html" class="flex items-center text-primary hover:text-primary/80 transition-all-300">
-          <i class="fa fa-link mr-2"></i>Excel批量超链接工具
-        </a>
-        <a href="https://github.com/niuxiangchen/Batch-Hyperlink-Tool-for-Excel" target="_blank" class="flex items-center text-gray-600 hover:text-gray-800 transition-all-300">
-          <i class="fa fa-github mr-2"></i>超链接工具源码
-        </a>
-        <a href="https://github.com/niuxiangchen/Simple-classification-and-summary" target="_blank" class="flex items-center text-gray-600 hover:text-gray-800 transition-all-300">
-          <i class="fa fa-github mr-2"></i>分类汇总工具源码
-        </a>
-        <a href="index.html" class="flex items-center text-green-600 hover:text-green-800 transition-all-300">
-          <i class="fa fa-home mr-2"></i>返回工具箱首页
-        </a>
-      </div>
-    </div> -->
-
       <!-- 联系方式备注 -->
       <div class="mt-6 text-right text-sm text-gray-500">
         <p>短号：65048<br />邮箱：1415055998@qq.com</p>
@@ -237,8 +216,9 @@
       </div>
     </footer>
 
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <script>
-      // 中文括号转英文括号
       function convertBrackets(str) {
         return str.replace(/（/g, "(").replace(/）/g, ")");
       }
@@ -264,7 +244,7 @@
           if (!inputText) {
             message.className = "bg-red-50 text-danger p-3 rounded-md";
             message.textContent =
-              "错误：请先粘贴或输入“品规+数量”格式的原始数据！";
+              "错误：请先粘贴或输入"品规+数量"格式的原始数据！";
             return;
           }
 
@@ -283,7 +263,7 @@
               message.className = "bg-red-50 text-danger p-3 rounded-md";
               message.textContent = `错误：第${
                 i + 1
-              }行格式错误！请确保用制表符分隔“品规”和“数量”`;
+              }行格式错误！请确保用制表符分隔"品规"和"数量"`;
               resultText.value = "";
               return;
             }
@@ -295,7 +275,7 @@
               message.className = "bg-red-50 text-danger p-3 rounded-md";
               message.textContent = `错误：第${
                 i + 1
-              }行“数量”不是有效数字（当前值：${quantityStr}）`;
+              }行"数量"不是有效数字（当前值：${quantityStr}）`;
               resultText.value = "";
               return;
             }
@@ -328,9 +308,9 @@
           // 生成结果文本
           let result = "";
           if (addIndex) {
-            result += "序号	品规	总数量\n";
+            result += "序号\t品规\t总数量\n";
           } else {
-            result += "品规	总数量\n";
+            result += "品规\t总数量\n";
           }
 
           sortedData.forEach(([brand, total], index) => {
@@ -452,5 +432,8 @@
         }
       }
     </script>
+
+    <!-- 不蒜子访问量统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
   </body>
 </html>
