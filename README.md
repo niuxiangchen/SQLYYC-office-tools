@@ -42,9 +42,5 @@
 2. 进入仓库目录，直接打开 `index.html` 文件即可使用所有工具
 3. 如需离线使用，确保将所有工具页面（`hyperlink-tool.html`/`summary-tool.html`/`AI-Response-to-Official-Document-Format-Conversion-Tool.html`）及依赖资源下载完整
 
-## 📊 访问量统计
 
-本项目使用[不蒜子](http://busuanzi.ibruce.info/)提供访问量统计功能。
-
-不蒜子是免费的纯静态页面访问量统计工具，无需注册、无需后端，引入一段JS即可实现统计。
 
