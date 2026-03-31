@@ -11,7 +11,7 @@
         }
 
         const route = location.search
-          .slice(2)
+          .slice(1)
           .split("&")
           .map((part, index) => (index === 0 ? part : part.replace(/~and~/g, "&")))
           .join("?");
