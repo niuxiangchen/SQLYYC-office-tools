@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <script>
+      (function redirectToSpa() {
+        const { location } = window;
+        const pathSegments = location.pathname.split("/");
+        const repoBase = pathSegments.slice(0, 2).join("/") || "";
+        const routePath = location.pathname.slice(repoBase.length) || "/";
+        const query = location.search ? `&${location.search.slice(1).replace(/&/g, "~and~")}` : "";
+        const redirectUrl = `${location.origin}${repoBase}/?${routePath}${query}${location.hash}`;
+
+        location.replace(redirectUrl);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/SQLYYC-office-tools/favicon.svg" />
+    <script>
+      (function redirectGitHubPagesSpa(location) {
+        if (!location.search.startsWith("?/")) {
+          return;
+        }
+
+        const route = location.search
+          .slice(2)
+          .split("&")
+          .map((part, index) => (index === 0 ? part : part.replace(/~and~/g, "&")))
+          .join("?");
+        const basePath = location.pathname.replace(/\/$/, "");
+
+        window.history.replaceState(null, "", `${basePath}${route}${location.hash}`);
+      })(window.location);
+    </script>
+    <title>机关办公提效工具箱</title>
+    <meta
+      name="description"
+      content="面向机关、国企与事业单位内勤的办公提效工具：文档处理、表格汇总、公文排版等，数据本地处理。"
+    />
+    <script type="module" crossorigin src="/SQLYYC-office-tools/assets/index-Hm-l1PTz.js"></script>
+    <link rel="modulepreload" crossorigin href="/SQLYYC-office-tools/assets/react-9CHhhXGa.js">
+    <link rel="stylesheet" crossorigin href="/SQLYYC-office-tools/assets/index-HYYLpoRT.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
