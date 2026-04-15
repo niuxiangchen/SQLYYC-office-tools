@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/SQLYYC-office-tools/sw.js', { scope: '/SQLYYC-office-tools/' })})}
